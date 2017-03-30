@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.shuanghe.hadoop</groupId>
+  <artifactId>my_hadoop_study</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <!-- 常量信息 -->
+  <properties>
+    <hadoop.version>2.5.0-cdh5.3.6</hadoop.version>
+    <hbase.version>0.98.6-cdh5.3.6</hbase.version>
+    <hive.version>0.13.1-cdh5.3.6</hive.version>
+    <mysql.version>5.1.26</mysql.version>
+    <gson.version>2.6.2</gson.version>
+    <uasparser.version>0.6.1</uasparser.version>
+  </properties>
+
+  <!-- 需要给定cloudera公司的CDH版本的maven库地址 -->
+  <repositories>
+    <repository>
+      <id>cloudera</id>
+      <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+    </repository>
+  </repositories>
+
+  <!-- 项目依赖 -->
+  <dependencies>
+    <!-- mysql start -->
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>${mysql.version}</version>
+    </dependency>
+    <!-- mysql end -->
+
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-common</artifactId>
+      <version>${hadoop.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-hdfs</artifactId>
+      <version>${hadoop.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-client</artifactId>
+      <version>${hadoop.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-client</artifactId>
+      <version>${hbase.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-server</artifactId>
+      <version>${hbase.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.hive</groupId>
+      <artifactId>hive-exec</artifactId>
+      <version>${hive.version}</version>
+    </dependency>
+
+    <!-- 解析浏览器工具 -->
+    <dependency>
+      <groupId>cz.mallat.uasparser</groupId>
+      <artifactId>uasparser</artifactId>
+      <version>${uasparser.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>${gson.version}</version>
+    </dependency>
+
+    <!-- mongodb java驱动包 -->
+    <!-- https://mvnrepository.com/artifact/org.mongodb/mongo-java-driver -->
+    <dependency>
+      <groupId>org.mongodb</groupId>
+      <artifactId>mongo-java-driver</artifactId>
+      <version>3.4.0</version>
+    </dependency>
+
+  </dependencies>
+
+  <!-- 环境概念 -->
+  <profiles>
+    <profile>
+      <!-- 唯一id，表示本地 -->
+      <id>local</id>
+      <activation>
+        <!-- maven编译的时候，默认环境，该参数为true，只能存在一个 -->
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <build>
+        <!-- 插件信息 -->
+        <plugins>
+          <plugin>
+            <!-- 将指定包的java进行编译，打包操作 -->
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <version>1.4</version>
+            <executions>
+              <execution>
+                <id>add-source</id>
+                <phase>generate-sources</phase>
+                <goals>
+                  <goal>add-source</goal>
+                </goals>
+                <configuration>
+                  <sources>
+                    <source>${basedir}/src/main/java</source>
+                    <source>${basedir}/src/main/extr</source>
+                  </sources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <!-- 需要最终形成一个jar文件 -->
+      <id>dev</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <!-- 将指定包的java进行编译，打包操作 -->
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <version>1.4</version>
+            <executions>
+              <execution>
+                <id>add-source</id>
+                <phase>generate-sources</phase>
+                <goals>
+                  <goal>add-source</goal>
+                </goals>
+                <configuration>
+                  <sources>
+                    <source>${basedir}/src/main/java</source>
+                  </sources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <!-- 将第三方的依赖包，一起打入到最终形成的jar文件中 -->
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <version>2.1</version>
+            <executions>
+              <execution>
+                <phase>package</phase>
+                <goals>
+                  <goal>shade</goal>
+                </goals>
+                <configuration>
+                  <artifactSet>
+                    <!-- 将哪些第三方包加入 -->
+                    <includes>
+                      <include>cz.mallat.uasparser:uasparser</include>
+                      <!-- jregex是uasparser的依赖包 -->
+                      <include>net.sourceforge.jregex:jregex</include>
+                      <include>mysql:mysql-connector-java</include>
+                    </includes>
+                  </artifactSet>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
+  <build>
+    <testSourceDirectory>src/test/java</testSourceDirectory>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.3</version>
+        <configuration>
+          <source>1.7</source>
+          <target>1.7</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
