@@ -2,6 +2,7 @@ package com.shuanghe.hadoop.hdfsAPI;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.security.UserGroupInformation;
 
 import java.io.BufferedReader;
@@ -16,38 +17,40 @@ import java.security.PrivilegedAction;
  * Created by yushuanghe on 2017/02/13.
  */
 public class TestOpen {
-  public static void main(String[] args) {
-    UserGroupInformation.createRemoteUser("hadoop").doAs(
-            new PrivilegedAction<Object>() {
-              @Override
-              public Object run() {
-                try {
-                  open();
-                } catch (IOException e) {
-                  e.printStackTrace();
+    public static void main(String[] args) {
+        UserGroupInformation.createRemoteUser("yushuanghe").doAs(
+                new PrivilegedAction<Object>() {
+                    @Override
+                    public Object run() {
+                        try {
+                            open();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        return null;
+                    }
                 }
-
-                return null;
-              }
-            }
-    );
-  }
-
-  /**
-   * 只能读取文本文件
-   *
-   * @throws IOException
-   */
-  private static void open() throws IOException {
-    FileSystem fileSystem = HdfsUtil.getFileSystem();
-    InputStream is = fileSystem.open(new Path("api/create1.txt"));
-    BufferedReader in = new BufferedReader(new InputStreamReader(is));
-    String line = null;
-    while ((line = in.readLine()) != null) {
-      System.out.println(line);
+        );
     }
-    in.close();
-    is.close();
-    fileSystem.close();
-  }
+
+    /**
+     * 只能读取文本文件
+     *
+     * @throws IOException
+     */
+    private static void open() throws IOException {
+        FileSystem fs = HdfsUtil.getFileSystem();
+        InputStream is = fs.open(new Path("api/TestCreateNewFile2.txt"), 4);
+        BufferedReader in = new BufferedReader(new InputStreamReader(is));
+        String line = null;
+        while ((line = in.readLine()) != null) {
+            System.out.println(line);
+        }
+        IOUtils.closeStream(in);
+        IOUtils.closeStream(is);
+        //in.close();
+        //is.close();
+        fs.close();
+    }
 }

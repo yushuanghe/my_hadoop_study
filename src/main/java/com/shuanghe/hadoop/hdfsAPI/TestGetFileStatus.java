@@ -13,7 +13,7 @@ import java.security.PrivilegedAction;
  */
 public class TestGetFileStatus {
     public static void main(String[] args) {
-        UserGroupInformation.createRemoteUser("hadoop").doAs(
+        UserGroupInformation.createRemoteUser("yushuanghe").doAs(
                 new PrivilegedAction<Object>() {
                     @Override
                     public Object run() {
@@ -31,14 +31,20 @@ public class TestGetFileStatus {
 
     private static void getFileStatus() throws IOException {
         FileSystem fs = HdfsUtil.getFileSystem();
-        FileStatus status = fs.getFileStatus(new Path("httpfs/test.txt"));
+        FileStatus status = fs.getFileStatus(new Path("api/copyFromLocal.xml"));
         System.out.println(status.isDirectory() ? "路径" : "文件");
-        System.out.println(status.getPermission());
-        System.out.println(status.getAccessTime());
-        System.out.println(status.getReplication());
-        System.out.println(status.getOwner());
-        System.out.println(status.getLen());
-        System.out.println(status.getModificationTime());
+
+        System.out.println(String.format("path:%s", status.getPath()));
+        System.out.println(String.format("length:%s", status.getLen()));
+        System.out.println(String.format("isdir:%s", status.isDirectory()));
+        System.out.println(String.format("block_replication:%s", status.getReplication()));
+        System.out.println(String.format("blocksize:%s", status.getBlockSize()));
+        System.out.println(String.format("modification_time:%s", status.getModificationTime()));
+        System.out.println(String.format("access_time:%s", status.getAccessTime()));
+        System.out.println(String.format("permission:%s", status.getPermission()));
+        System.out.println(String.format("owner:%s", status.getOwner()));
+        System.out.println(String.format("group:%s", status.getGroup()));
+        //System.out.println(String.format("symlink:%s", status.getSymlink()));
 
         fs.close();
     }

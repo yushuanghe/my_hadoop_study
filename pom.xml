@@ -10,10 +10,11 @@
 
     <!-- 常量信息 -->
     <properties>
-        <hadoop.version>2.5.0-cdh5.3.6</hadoop.version>
-        <hbase.version>0.98.6-cdh5.3.6</hbase.version>
-        <hive.version>0.13.1-cdh5.3.6</hive.version>
-        <mysql.version>5.1.26</mysql.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <hadoop.version>2.6.0-cdh5.7.0</hadoop.version>
+        <hbase.version>1.2.0-cdh5.7.0</hbase.version>
+        <hive.version>1.1.0-cdh5.7.0</hive.version>
+        <mysql.version>5.1.6</mysql.version>
         <gson.version>2.6.2</gson.version>
         <uasparser.version>0.6.1</uasparser.version>
     </properties>
@@ -198,8 +199,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.3</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
         </plugins>

@@ -22,7 +22,7 @@ public class WordCountRunner implements Tool {
 
     public static void main(String[] args) {
         final String[] args2 = args;
-        UserGroupInformation.createRemoteUser("hadoop").doAs(
+        UserGroupInformation.createRemoteUser("yushuanghe").doAs(
                 new PrivilegedAction<Object>() {
                     @Override
                     public Object run() {
@@ -45,7 +45,7 @@ public class WordCountRunner implements Tool {
         job.setJarByClass(WordCountRunner.class);
 
         //输入
-        FileInputFormat.addInputPath(job, new Path("mapreduce/input/word2.txt"));
+        FileInputFormat.addInputPath(job, new Path("mapreduce/input/word.txt"));
 
         //map
         job.setMapperClass(WordCountMapper.class);
@@ -60,7 +60,7 @@ public class WordCountRunner implements Tool {
         job.setOutputValueClass(LongWritable.class);
 
         //output
-        HdfsUtil.deleteFile("mapreduce/output");
+        HdfsUtil.deleteFile("mapreduce/output", conf);
         FileOutputFormat.setOutputPath(job, new Path("mapreduce/output"));
 
         return job.waitForCompletion(true) ? 0 : 1;
@@ -68,7 +68,10 @@ public class WordCountRunner implements Tool {
 
     @Override
     public void setConf(Configuration conf) {
-        conf.set("fs.defaultFS", "hdfs://192.168.236.128:8020");
+        //conf.set("fs.defaultFS", "hdfs://shuanghe.com:8020");
+        //conf.set("yarn.resourcemanager.hostname", "shuanghe.com");
+        //idea中运行需要设置jar包
+        conf.set("mapreduce.job.jar", "/home/yushuanghe/studyspace/my_hadoop_study/target/my_hadoop_study-1.0-SNAPSHOT.jar");
         this.conf = conf;
     }
 

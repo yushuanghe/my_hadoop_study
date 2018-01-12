@@ -12,46 +12,46 @@ import java.security.PrivilegedAction;
  * Created by yushuanghe on 2017/02/13.
  */
 public class TestCopy {
-  public static void main(String[] args) {
-    UserGroupInformation.createRemoteUser("hadoop").doAs(
-            new PrivilegedAction<Object>() {
-              @Override
-              public Object run() {
-                try {
-                  copyFromLocal();
-                  copyToLocal();
-                } catch (IOException e) {
-                  e.printStackTrace();
+    public static void main(String[] args) {
+        UserGroupInformation.createRemoteUser("yushuanghe").doAs(
+                new PrivilegedAction<Object>() {
+                    @Override
+                    public Object run() {
+                        try {
+                            copyFromLocal();
+                            copyToLocal();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        return null;
+                    }
                 }
+        );
+    }
 
-                return null;
-              }
-            }
-    );
-  }
+    /**
+     * 上传文件
+     *
+     * @throws IOException
+     */
+    private static void copyFromLocal() throws IOException {
+        FileSystem fs = HdfsUtil.getFileSystem();
+        fs.copyFromLocalFile(new Path("file:///home/yushuanghe/.m2/settings.xml"),
+                new Path("api/copyFromLocal.xml"));
+        fs.close();
+    }
 
-  /**
-   * 上传文件
-   *
-   * @throws IOException
-   */
-  private static void copyFromLocal() throws IOException {
-    FileSystem fs = HdfsUtil.getFileSystem();
-    fs.copyFromLocalFile(new Path("C:\\Users\\yushuanghe\\.m2\\settings.xml"),
-            new Path("api/copyFromLocal.xml"));
-    fs.close();
-  }
-
-  /**
-   * 下载文件
-   *
-   * @throws IOException
-   */
-  private static void copyToLocal() throws IOException {
-    FileSystem fs = HdfsUtil.getFileSystem();
-    fs.copyToLocalFile(new Path("api/copyFromLocal.xml"),
-            new Path("local/settings.xml")
-    );
-    fs.close();
-  }
+    /**
+     * 下载文件
+     *
+     * @throws IOException
+     */
+    private static void copyToLocal() throws IOException {
+        FileSystem fs = HdfsUtil.getFileSystem();
+        fs.copyToLocalFile(new Path("api/copyFromLocal.xml"),
+                new Path("local/settings.xml")
+        );
+        fs.close();
+    }
 }
