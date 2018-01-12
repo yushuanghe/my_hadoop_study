@@ -11,9 +11,7 @@ import java.io.IOException;
  * Created by yushuanghe on 2017/02/14.
  */
 public class HdfsUtil {
-    public static boolean deleteFile(String str) throws IOException {
-        Configuration conf = new Configuration();
-        conf.set("fs.defaultFS", "hdfs://192.168.236.128:8020");
+    public static boolean deleteFile(String str, Configuration conf) throws IOException {
         FileSystem fs = null;
         try {
             fs = FileSystem.get(conf);
