@@ -1,7 +1,5 @@
-package com.shuanghe.hadoop.mapreduce.oneMapReduceTop10;
+package com.shuanghe.hadoop.mapreduce.secondarySort;
 
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 
 import java.io.DataInput;
@@ -38,9 +36,9 @@ public class IntPair implements WritableComparable<IntPair> {
             return 0;
         }
         int tmp = Integer.compare(this.first, o.first);
-        if (tmp != 0)
-            return tmp;
-        tmp = this.second.compareTo(o.second);
+        if (tmp == 0){
+            tmp = this.second.compareTo(o.second);
+        }
         return tmp;
     }
 

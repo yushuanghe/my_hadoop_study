@@ -52,10 +52,14 @@ public class WordCountRunner implements Tool {
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(LongWritable.class);
 
+        //combiner
+        job.setCombinerClass(WordCountReducer.class);
+
         //shuffle
 
         //reduce
         job.setReducerClass(WordCountReducer.class);
+        job.setNumReduceTasks(1);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(LongWritable.class);
 
@@ -71,7 +75,7 @@ public class WordCountRunner implements Tool {
         //conf.set("fs.defaultFS", "hdfs://shuanghe.com:8020");
         //conf.set("yarn.resourcemanager.hostname", "shuanghe.com");
         //idea中运行需要设置jar包
-        conf.set("mapreduce.job.jar", "/home/yushuanghe/studyspace/my_hadoop_study/target/my_hadoop_study-1.0-SNAPSHOT.jar");
+        conf.set("mapreduce.job.jar", "/home/yushuanghe/studyspace/my_hadoop_study/target/my_hadoop_study.jar");
         this.conf = conf;
     }
 
