@@ -14,6 +14,11 @@ public class ReverseIndexReducer extends Reducer<Text, Text, Text, Text> {
     private Text outputValue;
 
     @Override
+    protected void setup(Context context) throws IOException, InterruptedException {
+        outputValue = new Text();
+    }
+
+    @Override
     protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
         StringBuffer sb = new StringBuffer();
         Map<String, Integer> map = new HashMap<>();
@@ -22,12 +27,16 @@ public class ReverseIndexReducer extends Reducer<Text, Text, Text, Text> {
             sb = new StringBuffer();
 
             String line = value.toString();
+            //路径长度不确定，反转后可以得到确定长度的数量
             line = sb.append(line).reverse().toString();
 
             String[] strs = line.split(":", 2);
+            //1,path(reverse后)
+
             //sb.delete(0, sb.length() - 1)
             //清空sb
             String path = sb.delete(0, sb.length() - 1).append(strs[1]).reverse().toString();
+
             Integer count = Integer.valueOf(strs[0]);
             if (map.containsKey(path)) {
                 map.put(path, map.get(path) + count);
@@ -43,10 +52,5 @@ public class ReverseIndexReducer extends Reducer<Text, Text, Text, Text> {
 
         outputValue.set(sb.deleteCharAt(sb.length() - 1).toString());
         context.write(key, outputValue);
-    }
-
-    @Override
-    protected void setup(Context context) throws IOException, InterruptedException {
-        outputValue = new Text();
     }
 }

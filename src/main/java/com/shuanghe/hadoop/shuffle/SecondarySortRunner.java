@@ -59,7 +59,7 @@ public class SecondarySortRunner {
     }
 
     public static void main(String[] args) {
-        UserGroupInformation.createRemoteUser("hadoop").doAs(
+        UserGroupInformation.createRemoteUser("yushuanghe").doAs(
                 new PrivilegedAction<Object>() {
                     @Override
                     public Object run() {
@@ -88,11 +88,7 @@ public class SecondarySortRunner {
                             FileOutputFormat.setOutputPath(job, new Path("shuffle/output" + System.currentTimeMillis()));
 
                             job.waitForCompletion(true);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        } catch (ClassNotFoundException e) {
+                        } catch (IOException | InterruptedException | ClassNotFoundException e) {
                             e.printStackTrace();
                         }
 

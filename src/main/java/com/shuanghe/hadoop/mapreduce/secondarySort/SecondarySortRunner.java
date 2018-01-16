@@ -37,16 +37,18 @@ public class SecondarySortRunner implements Tool {
         job.setMapOutputValueClass(IntWritable.class);
 
         job.setReducerClass(SecondarySortReducer.class);
+        job.setNumReduceTasks(1);
         job.setOutputKeyClass(SecondarySortPair.class);
         job.setOutputValueClass(IntWritable.class);
+
+        //sort
+        //job.setSortComparatorClass();
 
         //partitioner
         job.setPartitionerClass(SecondarySortPartitioner.class);
 
         //group
         job.setGroupingComparatorClass(SecondarySortGrouping.class);
-
-        job.setNumReduceTasks(1);
 
         //输入输出路径
         FileInputFormat.addInputPath(job, new Path("mapreduce/oneMapReduceTop10/word.txt"));
@@ -62,6 +64,14 @@ public class SecondarySortRunner implements Tool {
         //conf.set("yarn.resourcemanager.hostname", "shuanghe.com");
         //idea中运行需要设置jar包
         conf.set("mapreduce.job.jar", "/home/yushuanghe/studyspace/my_hadoop_study/target/my_hadoop_study.jar");
+
+        //compress
+        conf.set("mapreduce.map.output.compress","true");
+        conf.set("mapreduce.map.output.compress.codec","org.apache.hadoop.io.compress.BZip2Codec");
+
+        //native snappy library not available: this version of libhadoop was built without snappy support.
+        //需要添加snappy库
+        //conf.set("mapreduce.map.output.compress.codec","org.apache.hadoop.io.compress.SnappyCodec");
         this.conf = conf;
     }
 
