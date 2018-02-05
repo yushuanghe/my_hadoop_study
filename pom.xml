@@ -73,6 +73,12 @@
             <version>${hive.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-jdbc</artifactId>
+            <version>${hive.version}</version>
+        </dependency>
+
         <!-- 解析浏览器工具 -->
         <dependency>
             <groupId>cz.mallat.uasparser</groupId>

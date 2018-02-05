@@ -10,6 +10,8 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
 
 import java.io.IOException;
 import java.security.PrivilegedAction;
@@ -18,7 +20,50 @@ import java.security.PrivilegedAction;
  * 二次排序
  * Created by yushuanghe on 2017/02/14.
  */
-public class SecondarySortRunner {
+public class SecondarySortRunner implements Tool{
+    private Configuration conf;
+
+    @Override
+    public int run(String[] args) throws Exception {
+        Configuration conf = this.getConf();
+        //conf.set("fs.defaultFS", "hdfs://192.168.236.128");
+            Job job = Job.getInstance(conf, "shuffleSecondarySort");
+
+            job.setJarByClass(SecondarySortRunner.class);
+
+            job.setMapperClass(SecondarySortMapper.class);
+        job.setMapOutputKeyClass(IntPair.class);
+        job.setMapOutputValueClass(IntWritable.class);
+
+            job.setReducerClass(SecondarySortReducer.class);
+            job.setOutputKeyClass(IntWritable.class);
+            job.setOutputValueClass(Text.class);
+        job.setNumReduceTasks(2);
+
+        //partitioner
+        job.setPartitionerClass(IntPairPartitioner.class);
+
+            //group
+            job.setGroupingComparatorClass(IntPairGrouping.class);
+
+            //输入输出路径
+            FileInputFormat.addInputPath(job, new Path("shuffle/data.txt"));
+            FileOutputFormat.setOutputPath(job, new Path("shuffle/output" + System.currentTimeMillis()));
+
+           return job.waitForCompletion(true)?0:-1;
+    }
+
+    @Override
+    public void setConf(Configuration conf) {
+        conf.set("mapreduce.job.jar", "/home/yushuanghe/studyspace/my_hadoop_study/target/my_hadoop_study.jar");
+        this.conf=conf;
+    }
+
+    @Override
+    public Configuration getConf() {
+        return this.conf;
+    }
+
     static class SecondarySortMapper extends Mapper<Object, Text, IntPair, IntWritable> {
         @Override
         protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
@@ -59,36 +104,14 @@ public class SecondarySortRunner {
     }
 
     public static void main(String[] args) {
+        final  String[] args2=args;
         UserGroupInformation.createRemoteUser("yushuanghe").doAs(
                 new PrivilegedAction<Object>() {
                     @Override
                     public Object run() {
-                        Configuration conf = new Configuration();
-                        conf.set("fs.defaultFS", "hdfs://192.168.236.128");
                         try {
-                            Job job = Job.getInstance(conf, "secondarySort");
-
-                            job.setJarByClass(SecondarySortRunner.class);
-                            job.setMapperClass(SecondarySortMapper.class);
-                            job.setReducerClass(SecondarySortReducer.class);
-                            job.setMapOutputKeyClass(IntPair.class);
-                            job.setMapOutputValueClass(IntWritable.class);
-                            job.setOutputKeyClass(IntWritable.class);
-                            job.setOutputValueClass(Text.class);
-
-                            //group
-                            job.setGroupingComparatorClass(IntPairGrouping.class);
-
-                            //partitioner
-                            job.setPartitionerClass(IntPairPartitioner.class);
-                            job.setNumReduceTasks(2);
-
-                            //输入输出路径
-                            FileInputFormat.addInputPath(job, new Path("shuffle/data.txt"));
-                            FileOutputFormat.setOutputPath(job, new Path("shuffle/output" + System.currentTimeMillis()));
-
-                            job.waitForCompletion(true);
-                        } catch (IOException | InterruptedException | ClassNotFoundException e) {
+                            ToolRunner.run(new SecondarySortRunner(),args2);
+                        } catch (Exception e) {
                             e.printStackTrace();
                         }
 
