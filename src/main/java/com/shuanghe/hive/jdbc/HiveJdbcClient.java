@@ -30,7 +30,7 @@ public class HiveJdbcClient {
         Statement state = con.createStatement();
         String tableName = "testHiveDriverTable";
         state.execute("drop table if exists " + tableName);
-        String sql="create table " + tableName + " (key int, value string) ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'";
+        String sql = "create table " + tableName + " (key int, value string) ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t'";
         state.execute(sql);
         System.out.println("Running: " + sql);
 

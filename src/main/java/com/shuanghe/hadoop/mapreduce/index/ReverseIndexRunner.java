@@ -20,13 +20,13 @@ public class ReverseIndexRunner implements Tool {
     private Configuration conf;
 
     public static void main(String[] args) {
-        final String[] args2=args;
+        final String[] args2 = args;
         UserGroupInformation.createRemoteUser("yushuanghe").doAs(
                 new PrivilegedAction<Object>() {
                     @Override
                     public Object run() {
                         try {
-                            ToolRunner.run(new ReverseIndexRunner(),args2);
+                            ToolRunner.run(new ReverseIndexRunner(), args2);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -52,11 +52,11 @@ public class ReverseIndexRunner implements Tool {
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
 
-        String outPathStr="mapreduce/index/output";
-        HdfsUtil.deleteFile(outPathStr,conf);
+        String outPathStr = "mapreduce/index/output";
+        HdfsUtil.deleteFile(outPathStr, conf);
         FileOutputFormat.setOutputPath(job, new Path(outPathStr));
 
-       return job.waitForCompletion(true)?0:-1;
+        return job.waitForCompletion(true) ? 0 : -1;
     }
 
     @Override

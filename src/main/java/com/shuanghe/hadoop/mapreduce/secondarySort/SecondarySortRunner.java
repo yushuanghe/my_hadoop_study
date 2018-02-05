@@ -55,7 +55,7 @@ public class SecondarySortRunner implements Tool {
 
         FileOutputFormat.setOutputPath(job, new Path("mapreduce/secondarySort/output" + System.currentTimeMillis()));
 
-       return job.waitForCompletion(true)?0:-1;
+        return job.waitForCompletion(true) ? 0 : -1;
     }
 
     @Override
@@ -66,15 +66,15 @@ public class SecondarySortRunner implements Tool {
         conf.set("mapreduce.job.jar", "/home/yushuanghe/studyspace/my_hadoop_study/target/my_hadoop_study.jar");
 
         //map output compress
-        conf.set("mapreduce.map.output.compress","true");
-        conf.set("mapreduce.map.output.compress.codec","org.apache.hadoop.io.compress.BZip2Codec");
+        conf.set("mapreduce.map.output.compress", "true");
+        conf.set("mapreduce.map.output.compress.codec", "org.apache.hadoop.io.compress.BZip2Codec");
         //native snappy library not available: this version of libhadoop was built without snappy support.
         //需要添加snappy库
         //conf.set("mapreduce.map.output.compress.codec","org.apache.hadoop.io.compress.SnappyCodec");
 
         //reduce output compress
-        conf.set("mapreduce.output.fileoutputformat.compress","true");
-        conf.set("mapreduce.output.fileoutputformat.compress.codec","org.apache.hadoop.io.compress.BZip2Codec");
+        conf.set("mapreduce.output.fileoutputformat.compress", "true");
+        conf.set("mapreduce.output.fileoutputformat.compress.codec", "org.apache.hadoop.io.compress.BZip2Codec");
 
         this.conf = conf;
     }
@@ -85,14 +85,14 @@ public class SecondarySortRunner implements Tool {
     }
 
     static class SecondarySortMapper extends Mapper<Object, Text, SecondarySortPair, IntWritable> {
-        private IntWritable outputValue=new IntWritable(1);
+        private IntWritable outputValue = new IntWritable(1);
 
         @Override
         protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
             String line = value.toString();
             String[] strs = line.split(" ");
             for (String str : strs) {
-                context.write(new SecondarySortPair(str,(int)(Math.random()*10)), outputValue);
+                context.write(new SecondarySortPair(str, (int) (Math.random() * 10)), outputValue);
             }
         }
     }
@@ -109,7 +109,7 @@ public class SecondarySortRunner implements Tool {
         @Override
         protected void reduce(SecondarySortPair key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
             String word = key.getFirst();
-            int serial=key.getSecond();
+            int serial = key.getSecond();
             int i = 0;
             for (IntWritable t : values) {
                 i++;
@@ -135,13 +135,13 @@ public class SecondarySortRunner implements Tool {
     }
 
     public static void main(String[] args) {
-        final String[] args2=args;
+        final String[] args2 = args;
         UserGroupInformation.createRemoteUser("yushuanghe").doAs(
                 new PrivilegedAction<Object>() {
                     @Override
                     public Object run() {
                         try {
-                            ToolRunner.run(new SecondarySortRunner(),args2);
+                            ToolRunner.run(new SecondarySortRunner(), args2);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

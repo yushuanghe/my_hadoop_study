@@ -13,7 +13,7 @@ import java.util.StringTokenizer;
  * Created by yushuanghe on 2017/02/14.
  */
 public class ReverseIndexMapper extends Mapper<Object, Text, Text, Text> {
-    private Logger logger=Logger.getLogger(ReverseIndexMapper.class);
+    private Logger logger = Logger.getLogger(ReverseIndexMapper.class);
 
     private Text word;
     private Text outputValue;

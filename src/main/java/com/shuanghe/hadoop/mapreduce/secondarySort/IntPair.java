@@ -36,7 +36,7 @@ public class IntPair implements WritableComparable<IntPair> {
             return 0;
         }
         int tmp = Integer.compare(this.first, o.first);
-        if (tmp == 0){
+        if (tmp == 0) {
             tmp = this.second.compareTo(o.second);
         }
         return tmp;

@@ -20,43 +20,43 @@ import java.security.PrivilegedAction;
  * 二次排序
  * Created by yushuanghe on 2017/02/14.
  */
-public class SecondarySortRunner implements Tool{
+public class SecondarySortRunner implements Tool {
     private Configuration conf;
 
     @Override
     public int run(String[] args) throws Exception {
         Configuration conf = this.getConf();
         //conf.set("fs.defaultFS", "hdfs://192.168.236.128");
-            Job job = Job.getInstance(conf, "shuffleSecondarySort");
+        Job job = Job.getInstance(conf, "shuffleSecondarySort");
 
-            job.setJarByClass(SecondarySortRunner.class);
+        job.setJarByClass(SecondarySortRunner.class);
 
-            job.setMapperClass(SecondarySortMapper.class);
+        job.setMapperClass(SecondarySortMapper.class);
         job.setMapOutputKeyClass(IntPair.class);
         job.setMapOutputValueClass(IntWritable.class);
 
-            job.setReducerClass(SecondarySortReducer.class);
-            job.setOutputKeyClass(IntWritable.class);
-            job.setOutputValueClass(Text.class);
+        job.setReducerClass(SecondarySortReducer.class);
+        job.setOutputKeyClass(IntWritable.class);
+        job.setOutputValueClass(Text.class);
         job.setNumReduceTasks(2);
 
         //partitioner
         job.setPartitionerClass(IntPairPartitioner.class);
 
-            //group
-            job.setGroupingComparatorClass(IntPairGrouping.class);
+        //group
+        job.setGroupingComparatorClass(IntPairGrouping.class);
 
-            //输入输出路径
-            FileInputFormat.addInputPath(job, new Path("shuffle/data.txt"));
-            FileOutputFormat.setOutputPath(job, new Path("shuffle/output" + System.currentTimeMillis()));
+        //输入输出路径
+        FileInputFormat.addInputPath(job, new Path("shuffle/data.txt"));
+        FileOutputFormat.setOutputPath(job, new Path("shuffle/output" + System.currentTimeMillis()));
 
-           return job.waitForCompletion(true)?0:-1;
+        return job.waitForCompletion(true) ? 0 : -1;
     }
 
     @Override
     public void setConf(Configuration conf) {
         conf.set("mapreduce.job.jar", "/home/yushuanghe/studyspace/my_hadoop_study/target/my_hadoop_study.jar");
-        this.conf=conf;
+        this.conf = conf;
     }
 
     @Override
@@ -104,13 +104,13 @@ public class SecondarySortRunner implements Tool{
     }
 
     public static void main(String[] args) {
-        final  String[] args2=args;
+        final String[] args2 = args;
         UserGroupInformation.createRemoteUser("yushuanghe").doAs(
                 new PrivilegedAction<Object>() {
                     @Override
                     public Object run() {
                         try {
-                            ToolRunner.run(new SecondarySortRunner(),args2);
+                            ToolRunner.run(new SecondarySortRunner(), args2);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

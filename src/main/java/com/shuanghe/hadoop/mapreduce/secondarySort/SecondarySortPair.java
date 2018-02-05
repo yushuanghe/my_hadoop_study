@@ -18,7 +18,7 @@ public class SecondarySortPair implements WritableComparable<SecondarySortPair> 
     private String first;
     private int second;
 
-    public SecondarySortPair(){
+    public SecondarySortPair() {
     }
 
     public SecondarySortPair(String first, int second) {
@@ -28,6 +28,7 @@ public class SecondarySortPair implements WritableComparable<SecondarySortPair> 
 
     /**
      * 默认sort，group调用此方法
+     *
      * @param o
      * @return
      */
@@ -36,9 +37,9 @@ public class SecondarySortPair implements WritableComparable<SecondarySortPair> 
         if (o == this) {
             return 0;
         }
-        int result=this.first.compareTo(o.first);
-        if(result==0){
-            result=Integer.compare(this.second,o.second);
+        int result = this.first.compareTo(o.first);
+        if (result == 0) {
+            result = Integer.compare(this.second, o.second);
         }
         return result;
     }
@@ -51,8 +52,8 @@ public class SecondarySortPair implements WritableComparable<SecondarySortPair> 
 
     @Override
     public void readFields(DataInput in) throws IOException {
-        this.first=in.readUTF();
-        this.second=in.readInt();
+        this.first = in.readUTF();
+        this.second = in.readInt();
     }
 
     public String getFirst() {

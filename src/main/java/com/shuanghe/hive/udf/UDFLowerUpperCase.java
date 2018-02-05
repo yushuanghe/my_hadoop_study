@@ -20,7 +20,7 @@ public class UDFLowerUpperCase extends UDF {
      */
     public Text evaluate(Text text, Text lowerOrUpper) {
         Text result = null;
-        if(text==null|| StringUtils.isBlank(text.toString())){
+        if (text == null || StringUtils.isBlank(text.toString())) {
             return result;
         }
 

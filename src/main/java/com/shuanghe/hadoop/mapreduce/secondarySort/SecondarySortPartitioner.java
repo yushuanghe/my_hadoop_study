@@ -21,14 +21,14 @@ public class SecondarySortPartitioner extends Partitioner<SecondarySortPair, Int
     public int getPartition(SecondarySortPair key, IntWritable value, int numPartitions) {
         if (numPartitions > 1) {
             String first = key.getFirst();
-            if(StringUtils.isNotBlank(first)){
-                if(first.length()%2==0){
+            if (StringUtils.isNotBlank(first)) {
+                if (first.length() % 2 == 0) {
                     return 1;
-                }else {
+                } else {
                     //在第一个reducer处理
                     return 0;
                 }
-            }else {
+            } else {
                 return 0;
             }
         } else {
