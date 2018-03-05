@@ -11,9 +11,9 @@ import org.apache.hadoop.io.Text;
 public class RemoveQuotesUDF extends UDF {
 
     public Text evaluate(Text text) {
-        Text result=null;
-        if(text!=null&& StringUtils.isNotBlank(text.toString())){
-            result=new Text(text.toString().replaceAll("\"",""));
+        Text result = null;
+        if (text != null && StringUtils.isNotBlank(text.toString())) {
+            result = new Text(text.toString().replaceAll("\"", ""));
         }
         return result;
     }

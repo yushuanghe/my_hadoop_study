@@ -15,16 +15,16 @@ import java.util.Locale;
  */
 public class FormatDateUDF extends UDF {
 
-    private final SimpleDateFormat inFormat=new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss", Locale.ENGLISH);
-    private final SimpleDateFormat outFormat=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private final SimpleDateFormat inFormat = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss", Locale.ENGLISH);
+    private final SimpleDateFormat outFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     public Text evaluate(Text text) {
-        Text result=null;
-        if(text!=null&& StringUtils.isNotBlank(text.toString().trim())){
-            String str=text.toString().trim();
+        Text result = null;
+        if (text != null && StringUtils.isNotBlank(text.toString().trim())) {
+            String str = text.toString().trim();
             try {
-                Date date=inFormat.parse(str);
-                result=new Text(outFormat.format(date));
+                Date date = inFormat.parse(str);
+                result = new Text(outFormat.format(date));
             } catch (ParseException e) {
                 e.printStackTrace();
             }
