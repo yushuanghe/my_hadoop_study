@@ -1,12 +1,11 @@
 package com.shuanghe.hbase;
 
 import com.shuanghe.hbase.util.HBaseUtil;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Connection;
 
 import java.io.IOException;
 
@@ -15,34 +14,45 @@ import java.io.IOException;
  * Created by yushuanghe on 2017/02/16.
  */
 public class TestHBaseAdmin {
-    public static void main(String[] args) throws IOException {
-        Configuration conf = HBaseUtil.getHBaseConfiguration();
-        HBaseAdmin hBaseAdmin = new HBaseAdmin(conf);
+    public static void main(String[] args) {
+        Connection connection = HBaseUtil.getCon();
+        Admin admin = null;
+
         try {
-            testCreateTable(hBaseAdmin);
-            testGetTableDescribe(hBaseAdmin);
-//            testDeleteTable(hBaseAdmin);
+            admin = connection.getAdmin();
+
+            testCreateTable(admin);
+            testGetTableDescribe(admin);
+            //testDeleteTable(admin);
+        } catch (IOException e) {
+            e.printStackTrace();
         } finally {
-            hBaseAdmin.close();
+            try {
+                admin.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     /**
      * 创建表
      *
-     * @param hBaseAdmin
+     * @param admin
      * @throws IOException
      */
-    static void testCreateTable(HBaseAdmin hBaseAdmin) throws IOException {
+    private static void testCreateTable(Admin admin) throws IOException {
         //创建namespace
-//        hBaseAdmin.createNamespace(NamespaceDescriptor.create("dd").build());
+        //admin.createNamespace(NamespaceDescriptor.create("dd").build());
 
-        TableName tableName = TableName.valueOf("users");
-        HTableDescriptor descriptor = new HTableDescriptor(tableName);
-        if (!hBaseAdmin.tableExists(tableName)) {
-            descriptor.addFamily(new HColumnDescriptor("f"));
-            descriptor.setMaxFileSize(10000L);
-            hBaseAdmin.createTable(descriptor);
+        TableName tableName = TableName.valueOf("default:users");
+        HTableDescriptor table = new HTableDescriptor(tableName);
+        if (!admin.tableExists(tableName)) {
+            HColumnDescriptor cols1 = new HColumnDescriptor("cf");
+            cols1.setMaxVersions(3);
+            table.addFamily(cols1);
+
+            admin.createTable(table);
             System.out.println("表创建成功！");
         } else {
             System.out.println("表已存在！");
@@ -52,32 +62,32 @@ public class TestHBaseAdmin {
     /***
      * 获取表信息
      *
-     * @param hBaseAdmin
+     * @param admin
      * @throws IOException
      */
-    static void testGetTableDescribe(HBaseAdmin hBaseAdmin) throws IOException {
+    private static void testGetTableDescribe(Admin admin) throws IOException {
         TableName name = TableName.valueOf("users");
-        if (hBaseAdmin.tableExists(name)) {
-            HTableDescriptor ht1 = hBaseAdmin.getTableDescriptor(name);
-            System.out.println(ht1);
+        if (admin.tableExists(name)) {
+            HTableDescriptor table = admin.getTableDescriptor(name);
+            System.out.println(table);
         }
     }
 
     /**
      * 删除表，需要先disable
      *
-     * @param hBaseAdmin
+     * @param admin
      * @throws IOException
      */
-    static void testDeleteTable(HBaseAdmin hBaseAdmin) throws IOException {
+    private static void testDeleteTable(Admin admin) throws IOException {
         TableName name = TableName.valueOf("users");
 
-        if (hBaseAdmin.tableExists(name)) {
-            if (hBaseAdmin.isTableEnabled(name)) {
-                hBaseAdmin.disableTable(name);
+        if (admin.tableExists(name)) {
+            if (admin.isTableEnabled(name)) {
+                admin.disableTable(name);
             }
             //TableNotDisabledException: users
-            hBaseAdmin.deleteTable(name);
+            admin.deleteTable(name);
             System.out.println("删除成功！");
         } else {
             System.out.println("表不存在！");

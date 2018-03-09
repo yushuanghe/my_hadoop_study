@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 /**
  * Created by yushuanghe on 2017/02/16.
  */
+@Deprecated
 public class TestHTableConnectionPool {
     public static void main(String[] args) {
 
