@@ -17,6 +17,7 @@
         <mysql.version>5.1.6</mysql.version>
         <gson.version>2.6.2</gson.version>
         <uasparser.version>0.6.1</uasparser.version>
+        <scala.version>2.11.11</scala.version>
     </properties>
 
     <!-- 需要给定cloudera公司的CDH版本的maven库地址 -->
@@ -86,6 +87,32 @@
             <version>${hive.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-compiler</artifactId>
+            <version>${scala.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-reflect</artifactId>
+            <version>${scala.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-actors</artifactId>
+            <version>${scala.version}</version>
+        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.scala-tools</groupId>-->
+            <!--<artifactId>maven-scala-plugin</artifactId>-->
+            <!--<version>${scala.version}</version>-->
+        <!--</dependency>-->
+
         <!-- 解析浏览器工具 -->
         <dependency>
             <groupId>cz.mallat.uasparser</groupId>
@@ -143,7 +170,7 @@
                                 <configuration>
                                     <sources>
                                         <source>${basedir}/src/main/java</source>
-                                        <source>${basedir}/src/main/extr</source>
+                                        <source>${basedir}/src/main/scala</source>
                                     </sources>
                                 </configuration>
                             </execution>
@@ -176,6 +203,7 @@
                                 <configuration>
                                     <sources>
                                         <source>${basedir}/src/main/java</source>
+                                        <source>${basedir}/src/main/scala</source>
                                     </sources>
                                 </configuration>
                             </execution>
@@ -223,8 +251,24 @@
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
+                    <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
+            <!--<plugin>-->
+                <!--<groupId>net.alchim31.maven</groupId>-->
+                <!--<artifactId>scala-maven-plugin</artifactId>-->
+                <!--<version>3.2.1</version>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<id>scala-compile-first</id>-->
+                        <!--<phase>process-resources</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>add-source</goal>-->
+                            <!--<goal>compile</goal>-->
+                        <!--</goals>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
         </plugins>
     </build>
 </project>
