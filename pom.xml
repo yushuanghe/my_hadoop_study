@@ -108,9 +108,9 @@
             <version>${scala.version}</version>
         </dependency>
         <!--<dependency>-->
-            <!--<groupId>org.scala-tools</groupId>-->
-            <!--<artifactId>maven-scala-plugin</artifactId>-->
-            <!--<version>${scala.version}</version>-->
+        <!--<groupId>org.scala-tools</groupId>-->
+        <!--<artifactId>maven-scala-plugin</artifactId>-->
+        <!--<version>${scala.version}</version>-->
         <!--</dependency>-->
 
         <!-- 解析浏览器工具 -->
@@ -255,19 +255,19 @@
                 </configuration>
             </plugin>
             <!--<plugin>-->
-                <!--<groupId>net.alchim31.maven</groupId>-->
-                <!--<artifactId>scala-maven-plugin</artifactId>-->
-                <!--<version>3.2.1</version>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<id>scala-compile-first</id>-->
-                        <!--<phase>process-resources</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>add-source</goal>-->
-                            <!--<goal>compile</goal>-->
-                        <!--</goals>-->
-                    <!--</execution>-->
-                <!--</executions>-->
+            <!--<groupId>net.alchim31.maven</groupId>-->
+            <!--<artifactId>scala-maven-plugin</artifactId>-->
+            <!--<version>3.2.1</version>-->
+            <!--<executions>-->
+            <!--<execution>-->
+            <!--<id>scala-compile-first</id>-->
+            <!--<phase>process-resources</phase>-->
+            <!--<goals>-->
+            <!--<goal>add-source</goal>-->
+            <!--<goal>compile</goal>-->
+            <!--</goals>-->
+            <!--</execution>-->
+            <!--</executions>-->
             <!--</plugin>-->
         </plugins>
     </build>
