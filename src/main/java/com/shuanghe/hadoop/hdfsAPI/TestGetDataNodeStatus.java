@@ -1,5 +1,6 @@
 package com.shuanghe.hadoop.hdfsAPI;
 
+import com.shuanghe.hadoop.util.HdfsUtil;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
