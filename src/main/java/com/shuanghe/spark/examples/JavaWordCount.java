@@ -33,9 +33,11 @@ public final class JavaWordCount {
 
         JavaPairRDD<String, Integer> ones = words.mapToPair(s -> new Tuple2<>(s, 1));
 
+        //reduceByKey会有本地combiner优化
         JavaPairRDD<String, Integer> counts = ones.reduceByKey((i1, i2) -> i1 + i2);
 
         List<Tuple2<String, Integer>> output = counts.collect();
+
         for (Tuple2<?, ?> tuple : output) {
             System.out.println(tuple._1() + ": " + tuple._2());
         }
