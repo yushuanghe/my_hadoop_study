@@ -7,9 +7,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -43,17 +41,43 @@ public class GroupTop3Java {
         JavaPairRDD<String, Iterable<Integer>> groupTopRdd = groupRdd.mapToPair(new PairFunction<Tuple2<String, Iterable<Integer>>, String, Iterable<Integer>>() {
             @Override
             public Tuple2<String, Iterable<Integer>> call(Tuple2<String, Iterable<Integer>> tuple) throws Exception {
-                List<Integer> list = new ArrayList<>();
+                String key = tuple._1;
+                Iterable<Integer> list = tuple._2;
+                //List<Integer> list = new ArrayList<>();
+                //
+                //for (Integer a_2 : tuple._2) {
+                //    list.add(a_2);
+                //}
+                //
+                //list.sort((a, b) -> b - a);
+                //
+                //List<Integer> result = Arrays.asList(list.get(0), list.get(1), list.get(2));
+                //
+                //return new Tuple2<>(tuple._1, result);
 
-                for (Integer a_2 : tuple._2) {
-                    list.add(a_2);
+                //性能优化版
+                int number = 3;//要取的topn数量
+                Integer[] top3 = new Integer[number];
+
+                for (int iter : list) {
+
+                    for (int i = 0; i < number; i++) {
+                        if (top3[i] == null) {
+                            top3[i] = iter;
+                            break;
+                        } else if (iter > top3[i]) {
+                            for (int j = number - 1; j > i; j--) {
+                                top3[j] = top3[j - 1];
+                            }
+
+                            top3[i] = iter;
+                            break;
+                        }
+                    }
+
                 }
 
-                list.sort((a, b) -> b - a);
-
-                List<Integer> result = Arrays.asList(list.get(0), list.get(1), list.get(2));
-
-                return new Tuple2<>(tuple._1, result);
+                return new Tuple2<>(key, Arrays.asList(top3));
             }
         });
 

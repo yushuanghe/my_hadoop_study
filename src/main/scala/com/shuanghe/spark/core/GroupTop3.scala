@@ -18,15 +18,50 @@ object GroupTop3 {
         }
         }.groupByKey()
 
-        val resultRdd: RDD[(String, List[Int])] = groupRdd.map { tuple => {
-            val list: List[Int] = tuple._2.toList
+        val resultRdd: RDD[(String, Array[Int])] = groupRdd.map { tuple => {
+            //            val list: List[Int] = tuple._2.toList
+            //
+            //            val value: List[Int] = list.sorted.reverse.take(3)
+            //            (tuple._1, value)
 
-            val value: List[Int] = list.sorted.reverse.take(3)
-            (tuple._1, value)
+            //性能优化版
+            val key: String = tuple._1
+            val value: Iterable[Int] = tuple._2
+
+            val number: Int = 3
+            var top3 = new Array[Int](3)
+
+            for (iter <- value) {
+
+                import scala.util.control.Breaks._
+                breakable {
+                    for (i <- 0.until(number)) {
+                        if (top3(i) == null) {
+                            top3(i) = iter
+                            break
+                        } else if (iter > top3(i)) {
+                            for (j <- (number - 1).to(i + 1, -1)) {
+                                top3(j) = top3(j - 1)
+                            }
+
+                            top3(i) = iter
+                            break
+                        }
+                    }
+                }
+
+            }
+
+            (key, top3)
         }
         }
 
-        resultRdd.foreach(println(_))
+        resultRdd.foreach { tuple => {
+            println(tuple._1)
+            tuple._2.foreach(println(_))
+            println("=========")
+        }
+        }
 
         spark.close()
     }
