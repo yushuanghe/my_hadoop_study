@@ -23,7 +23,8 @@ public class Top3Java {
 
         JavaRDD<String> rdd = sc.textFile("file:///home/yushuanghe/test/data/top.txt", 2);
 
-        JavaRDD<String> resultRdd = rdd.mapToPair(x -> new Tuple2<>(Integer.parseInt(x), x))
+        JavaRDD<String> resultRdd = rdd
+                .mapToPair(x -> new Tuple2<>(Integer.parseInt(x), x))
                 .sortByKey(false)
                 .map(x -> x._2);
 

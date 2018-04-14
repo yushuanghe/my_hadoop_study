@@ -6,3 +6,4 @@
 - hadoop  
 - hive  
 - hbase  
+- spark  
