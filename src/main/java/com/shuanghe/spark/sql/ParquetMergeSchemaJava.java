@@ -1,5 +1,7 @@
 package com.shuanghe.spark.sql;
 
+import com.shuanghe.spark.sql.model.Score;
+import com.shuanghe.spark.sql.model.Student;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Dataset;
@@ -46,38 +48,13 @@ public class ParquetMergeSchemaJava {
         df2.write().mode(SaveMode.Append)
                 .parquet("spark/mergeSchema");
 
-        Dataset<Row> mergeDF = spark.read().option("mergeSchema", "ture")
+        Dataset<Row> mergeDF = spark.read()
+                .option("mergeSchema", true)
                 .parquet("spark/mergeSchema");
-// TODO: 18-4-17 JavaRDD 反射无法获取 schema 
+
         mergeDF.printSchema();
         mergeDF.show();
 
         spark.close();
-    }
-}
-
-class Score {
-    private int id;
-    private int score;
-
-    public Score(int id, int score) {
-        this.id = id;
-        this.score = score;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public int getScore() {
-        return score;
-    }
-
-    public void setScore(int score) {
-        this.score = score;
     }
 }
