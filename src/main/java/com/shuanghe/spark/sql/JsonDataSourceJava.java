@@ -75,11 +75,14 @@ public class JsonDataSourceJava {
 
         JavaPairRDD<String, Integer> pairRDD = resultDF.javaRDD()
                 .mapToPair((Row row) ->
-                        new Tuple2<String, Integer>(row.getString(0), (int) row.getLong(2))
+                        new Tuple2<>(row.getString(0), (int) row.getLong(2))
                 );
 
-        //JavaPairRDD<String, Tuple2<Integer, Integer>> resultRdd = pairRDD.join(df.javaRDD().mapToPair((Row row) -> new Tuple2<String, Integer>(row.getString(0), Integer.parseInt(String.valueOf(row.getLong(1))))
-        //));
+        //可以运行
+        JavaPairRDD<String, Tuple2<Integer, Integer>> resultRdd = pairRDD.join(df.javaRDD().mapToPair((Row row) -> new Tuple2<>(row.getString(0), (int) row.getLong(1))
+        ));
+
+        resultRdd.foreach(x -> System.out.println(x));
 
         JavaRDD<Row> rowRDD = resultDF.javaRDD()
                 .map((Row row) ->
