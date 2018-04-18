@@ -24,7 +24,9 @@ object JsonDataSource {
         val nameList: Array[String] = goodStudentScoreDF.rdd
                 .map(row => row.getAs[String]("name")).collect()
 
-        val studentInfoJson: Array[String] = Array[String]("{\"name\":\"Leo\",\"age\":18}", "{\"name\":\"Marry\",\"age\":20}", "{\"name\":\"Jack\",\"age\":16}")
+        val studentInfoJson: Array[String] = Array[String]("{\"name\":\"Leo\",\"age\":18}"
+            , "{\"name\":\"Marry\",\"age\":20}"
+            , "{\"name\":\"Jack\",\"age\":16}")
         val studentInfoJsonRDD: RDD[String] = spark.sparkContext.parallelize(studentInfoJson)
         val studentInfoDF: DataFrame = spark.read
                 .option("timestampFormat", "yyyy/MM/dd HH:mm:ss ZZ")
@@ -33,11 +35,12 @@ object JsonDataSource {
         studentInfoDF.createOrReplaceTempView("student_info")
 
         var sql = "select name,age from student_info where name in ("
-        for (s <- 0.until(nameList.length)) {
-            if (s < (nameList.length - 1))
+        for (s <- nameList.indices) {
+            if (s < (nameList.length - 1)) {
                 sql += "'" + nameList(s) + "',"
-            else
+            } else {
                 sql += "'" + nameList(s) + "')"
+            }
         }
 
         println(sql)
@@ -57,7 +60,7 @@ object JsonDataSource {
         }
 
         val resultRDD: RDD[Row] = joinRDD.map { tuple => {
-            Row(tuple._1, tuple._2._1.toString.toInt, tuple._2._2.toString.toInt)
+            Row(tuple._1, tuple._2._1, tuple._2._2)
         }
         }
 
