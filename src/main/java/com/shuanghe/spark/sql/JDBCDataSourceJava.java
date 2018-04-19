@@ -1,5 +1,6 @@
 package com.shuanghe.spark.sql;
 
+import com.shuanghe.common.GlobalConstants;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.*;
@@ -33,17 +34,17 @@ public class JDBCDataSourceJava {
         //options.put("url","jdbc:mysql://shuanghe.com:3306/test");
         //options.put("dbtable","student_info");
         Properties properties = new Properties();
-        properties.setProperty("user", "root");
-        properties.setProperty("password", "123456");
+        properties.setProperty("user", GlobalConstants.MYSQL_USER);
+        properties.setProperty("password", GlobalConstants.MYSQL_PASSWD);
 
         Dataset<Row> infoDF = spark.read()
                 //.options(options)
-                .jdbc("jdbc:mysql://shuanghe.com:3306/test", "student_info", properties);
+                .jdbc(GlobalConstants.MYSQL_URL, "student_info", properties);
         infoDF.printSchema();
         infoDF.show();
 
         Dataset<Row> scoreDF = spark.read()
-                .jdbc("jdbc:mysql://shuanghe.com:3306/test", "student_score", properties);
+                .jdbc(GlobalConstants.MYSQL_URL, "student_score", properties);
         scoreDF.printSchema();
         scoreDF.show();
 
@@ -75,7 +76,7 @@ public class JDBCDataSourceJava {
 
         resultDF.write()
                 .mode(SaveMode.Append)
-                .jdbc("jdbc:mysql://shuanghe.com:3306/test", "good_student_info", properties);
+                .jdbc(GlobalConstants.MYSQL_URL, "good_student_info", properties);
 
         resultDF.foreachPartition((Iterator<Row> rows) -> {
             Connection conn = null;
