@@ -3,8 +3,6 @@ package com.shuanghe.spark.sql
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
-case class Student(id: Int, name: String, age: Int)
-
 object ParquetMergeSchema {
     def main(args: Array[String]): Unit = {
         val spark = SparkSession.builder
