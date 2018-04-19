@@ -55,13 +55,9 @@ public class JDBCDataSourceJava {
                 new Tuple2<>(row.getString(0), row.getInt(1))));
 
         JavaRDD<Row> rowRDD = joinRDD.map((tuple) -> RowFactory.create(tuple._1, tuple._2._1, tuple._2._2))
-                .filter((row) -> {
-                    if (row.getInt(2) > 80) {
-                        return true;
-                    } else {
-                        return false;
-                    }
-                });
+                .filter((row) ->
+                        row.getInt(2) > 80
+                );
 
         List<StructField> structFields = new ArrayList<>();
         structFields.add(DataTypes.createStructField("name", DataTypes.StringType, true));
