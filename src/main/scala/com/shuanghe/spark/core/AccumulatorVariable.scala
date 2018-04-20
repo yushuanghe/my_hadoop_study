@@ -16,12 +16,15 @@ object AccumulatorVariable {
 
         val accum: LongAccumulator = spark.sparkContext.longAccumulator("longAccum")
 
-        val rdd1: RDD[Int] = rdd.map { x =>
+        val rdd1: RDD[Int] = rdd.map { x => {
             accum.add(x)
             x + 1
         }
+        }
 
-        rdd1.cache().count()
+        rdd1
+                .cache()
+                .count()
         println(accum.value)
         rdd1.count()
         println(accum.value)
