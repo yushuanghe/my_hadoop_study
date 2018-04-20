@@ -1,5 +1,6 @@
 package com.shuanghe.hive.udtf;
 
+import com.shuanghe.mapreduceAndHbase.HBaseTableOnlyMapperDemo;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDTF;
@@ -51,7 +52,7 @@ public class UDTFCase extends GenericUDTF {
         }
         //只有一个参数
         String line = args[0].toString();
-        Map<String, String> map = transfoerContent2Map(line);
+        Map<String, String> map = HBaseTableOnlyMapperDemo.transfoerContent2Map(line);
 
         List<String> result = new ArrayList<>();
         result.add(map.get("p_id"));
@@ -71,28 +72,5 @@ public class UDTFCase extends GenericUDTF {
     public void close() throws HiveException {
         //nothing
         super.forward(new String[]{"123456789", "close", "123"});
-    }
-
-    /**
-     * 转换content为map对象
-     *
-     * @param content
-     * @return
-     */
-    static Map<String, String> transfoerContent2Map(String content) {
-        Map<String, String> map = new HashMap<>();
-        int i = 0;
-        String key = "";
-        StringTokenizer tokenizer = new StringTokenizer(content, "({|}|\"|:|,)");
-        while (tokenizer.hasMoreTokens()) {
-            if (++i % 2 == 0) {
-                //当前值为value
-                map.put(key, tokenizer.nextToken());
-            } else {
-                //当前值为key
-                key = tokenizer.nextToken();
-            }
-        }
-        return map;
     }
 }

@@ -8,9 +8,7 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
-import org.apache.hadoop.hbase.mapreduce.TableReducer;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.security.UserGroupInformation;
 
@@ -43,6 +41,7 @@ public class HBaseTableOnlyMapperDemo {
                 System.out.println("数据格式错误" + content);
                 return;
             }
+
             Map<String, String> map = HBaseTableOnlyMapperDemo.transfoerContent2Map(content);
             if (map.containsKey("p_id")) {
                 //存在outputKey
@@ -55,9 +54,9 @@ public class HBaseTableOnlyMapperDemo {
 
             if (map.containsKey("p_name") && map.containsKey("price")) {
                 //数据正常，进行赋值
-                outputValue.add(Bytes.toBytes("f"), Bytes.toBytes("id"), Bytes.toBytes(map.get("p_id")));
-                outputValue.add(Bytes.toBytes("f"), Bytes.toBytes("name"), Bytes.toBytes(map.get("p_name")));
-                outputValue.add(Bytes.toBytes("f"), Bytes.toBytes("price"), Bytes.toBytes(map.get("price")));
+                outputValue.addColumn(Bytes.toBytes("f"), Bytes.toBytes("id"), Bytes.toBytes(map.get("p_id")));
+                outputValue.addColumn(Bytes.toBytes("f"), Bytes.toBytes("name"), Bytes.toBytes(map.get("p_name")));
+                outputValue.addColumn(Bytes.toBytes("f"), Bytes.toBytes("price"), Bytes.toBytes(map.get("price")));
             } else {
                 System.out.println("数据格式错误" + content);
                 return;
@@ -74,48 +73,41 @@ public class HBaseTableOnlyMapperDemo {
      */
     public static void main(String[] args) throws IOException {
         UserGroupInformation.createRemoteUser("hadoop").doAs(
-                new PrivilegedAction<Object>() {
-                    @Override
-                    public Object run() {
-                        Configuration conf = HBaseConfiguration.create();
-                        conf.set("fs.defaultFS", "hdfs://hadoop.shuanghe.com:8020");
-                        conf.set("hbase.zookeeper.quorum", "hadoop.shuanghe.com:2181");
+                (PrivilegedAction<Object>) () -> {
+                    Configuration conf = HBaseConfiguration.create();
+                    conf.set("fs.defaultFS", "hdfs://hadoop.shuanghe.com:8020");
+                    conf.set("hbase.zookeeper.quorum", "hadoop.shuanghe.com:2181");
 
-                        Job job = null;
-                        try {
-                            job = Job.getInstance(conf, "mapreduceAndHbase");
-                            job.setJarByClass(HBaseTableOnlyMapperDemo.class);
+                    Job job = null;
+                    try {
+                        job = Job.getInstance(conf, "mapreduceAndHbase");
+                        job.setJarByClass(HBaseTableOnlyMapperDemo.class);
 
-                            //设置mapper相关
-                            //本地运行
-                            TableMapReduceUtil.initTableMapperJob("data", new Scan(),
-                                    DemoMapper.class, ImmutableBytesWritable.class, Put.class, job, false);
-                            //集群运行
+                        //设置mapper相关
+                        //本地运行
+                        TableMapReduceUtil.initTableMapperJob("data", new Scan(),
+                                DemoMapper.class, ImmutableBytesWritable.class, Put.class, job, false);
+                        //集群运行
 //                            TableMapReduceUtil.initTableMapperJob("data", new Scan(),
 //                                    DemoMapper.class, Text.class, ProductModel.class, job);
 
-                            //设置reducer相关
-                            //本地运行
-                            TableMapReduceUtil.initTableReducerJob("online_product", null,
-                                    job, null, null, null, null, false);
-                            //集群运行
+                        //设置reducer相关
+                        //本地运行
+                        TableMapReduceUtil.initTableReducerJob("online_product", null,
+                                job, null, null, null, null, false);
+                        //集群运行
 //                            TableMapReduceUtil.initTableReducerJob("online_product", null,
 //                                    job);
 
-                            job.setNumReduceTasks(0);
+                        job.setNumReduceTasks(0);
 
-                            String exitCode = job.waitForCompletion(true) ? "执行成功！" : "执行失败！";
-                            System.out.println(exitCode);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        } catch (ClassNotFoundException e) {
-                            e.printStackTrace();
-                        }
-
-                        return null;
+                        String exitCode = job.waitForCompletion(true) ? "执行成功！" : "执行失败！";
+                        System.out.println(exitCode);
+                    } catch (IOException | ClassNotFoundException | InterruptedException e) {
+                        e.printStackTrace();
                     }
+
+                    return null;
                 }
         );
 
@@ -127,7 +119,7 @@ public class HBaseTableOnlyMapperDemo {
      * @param content
      * @return
      */
-    static Map<String, String> transfoerContent2Map(String content) {
+    public static Map<String, String> transfoerContent2Map(String content) {
         Map<String, String> map = new HashMap<>();
         int i = 0;
         String key = "";
