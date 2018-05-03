@@ -18,6 +18,8 @@ import java.util.Arrays;
  * Time: 上午12:16
  * To change this template use File | Settings | File Templates.
  * Description:实时 wordcount 程序
+ * <p>
+ * nc -lk 9999
  */
 public class WordCountJava {
     public static void main(String[] args) {
@@ -27,7 +29,7 @@ public class WordCountJava {
                 .getOrCreate();
 
         // 还必须接收一个batch interval参数，就是说，每收集多长时间的数据，划分为一个batch，进行处理
-        // 这里设置一秒
+        // 这里设置5秒
         JavaStreamingContext streamingContext = new JavaStreamingContext(JavaSparkContext.fromSparkContext(spark.sparkContext()), Durations.seconds(5));
 
         //首先，创建输入DStream，代表了一个从数据源来的持续不断的实时数据源
@@ -72,7 +74,7 @@ public class WordCountJava {
         // 进行缓存
         // 此时就只能将最后计算出的wordCounts中的一个一个的RDD，写入外部的缓存，或者持久化DB
 
-        // 最后，每次计算完，都打印一下这一秒钟的单词计数情况
+        // 最后，每次计算完，都打印一下这5秒钟的单词计数情况
         wordCounts.print();
 
         // 首先对JavaSteamingContext进行一下后续处理

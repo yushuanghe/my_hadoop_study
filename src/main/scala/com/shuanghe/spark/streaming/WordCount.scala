@@ -5,6 +5,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.dstream.{DStream, ReceiverInputDStream}
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 
+//nc -lk 9999
 object WordCount {
     def main(args: Array[String]): Unit = {
         val spark = SparkSession.builder()
