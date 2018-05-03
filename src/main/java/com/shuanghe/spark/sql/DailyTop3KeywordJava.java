@@ -101,7 +101,7 @@ public class DailyTop3KeywordJava {
             }
             long uv = distinctUser.size();
 
-            return new Tuple2<String, Long>(dateKeyword, uv);
+            return new Tuple2<>(dateKeyword, uv);
         });
 
         //将每天每个搜索词的uv数据，转换成 DataFrame
