@@ -25,7 +25,7 @@ object WordCount {
             (word, 1)
         })
 
-        val wordCounts = pairs.reduceByKey((v1: Int, v2: Int) => {
+        val wordCounts: DStream[(String, Int)] = pairs.reduceByKey((v1: Int, v2: Int) => {
             v1 + v2
         })
 
