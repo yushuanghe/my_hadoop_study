@@ -170,17 +170,22 @@ public class TransformationOperationJava {
         });
     }
 
+    /**
+     * join 生成多个tuple
+     *
+     * @param sc
+     */
     private static void join(JavaSparkContext sc) {
         List<Tuple2<Integer, Integer>> scoreList = Arrays.asList(
-                new Tuple2<Integer, Integer>(1, 100),
-                new Tuple2<Integer, Integer>(2, 90),
-                new Tuple2<Integer, Integer>(3, 60)
+                new Tuple2<>(1, 100),
+                new Tuple2<>(2, 90),
+                new Tuple2<>(3, 60)
         );
 
         List<Tuple2<Integer, String>> studentList = Arrays.asList(
-                new Tuple2<Integer, String>(1, "leo"),
-                new Tuple2<Integer, String>(2, "jack"),
-                new Tuple2<Integer, String>(3, "haha")
+                new Tuple2<>(1, "leo"),
+                new Tuple2<>(2, "jack"),
+                new Tuple2<>(3, "haha")
         );
 
         JavaPairRDD<Integer, String> studentRdd = sc.parallelizePairs(studentList);
@@ -189,27 +194,28 @@ public class TransformationOperationJava {
         //def join[W](other: JavaPairRDD[K, W]): JavaPairRDD[K, (V, W)]
         //   JavaPairRDD<Integer, Tuple2<String, Integer>> joinRdd=
         studentRdd.join(scoreRdd)
-                .foreach(new VoidFunction<Tuple2<Integer, Tuple2<String, Integer>>>() {
-                    @Override
-                    public void call(Tuple2<Integer, Tuple2<String, Integer>> tuple) throws Exception {
-                        System.out.println(tuple._1 + ":" + tuple._2._1 + "," + tuple._2._2);
-                    }
-                });
+                .foreach((VoidFunction<Tuple2<Integer, Tuple2<String, Integer>>>) tuple ->
+                        System.out.println(tuple._1 + ":" + tuple._2._1 + "," + tuple._2._2));
     }
 
+    /**
+     * cogroup 生成一个tuple
+     *
+     * @param sc
+     */
     private static void cogroup(JavaSparkContext sc) {
         List<Tuple2<Integer, Integer>> scoreList = Arrays.asList(
-                new Tuple2<Integer, Integer>(1, 100),
-                new Tuple2<Integer, Integer>(2, 90),
-                new Tuple2<Integer, Integer>(3, 60),
+                new Tuple2<>(1, 100),
+                new Tuple2<>(2, 90),
+                new Tuple2<>(3, 60),
                 new Tuple2<>(1, 50),
                 new Tuple2<>(1, 99)
         );
 
         List<Tuple2<Integer, String>> studentList = Arrays.asList(
-                new Tuple2<Integer, String>(1, "leo"),
-                new Tuple2<Integer, String>(2, "jack"),
-                new Tuple2<Integer, String>(3, "haha")
+                new Tuple2<>(1, "leo"),
+                new Tuple2<>(2, "jack"),
+                new Tuple2<>(3, "haha")
         );
 
         JavaPairRDD<Integer, String> studentRdd = sc.parallelizePairs(studentList);
@@ -217,12 +223,9 @@ public class TransformationOperationJava {
 
         //def cogroup[W](other: JavaPairRDD[K, W]): JavaPairRDD[K, (JIterable[V], JIterable[W])]
         //JavaPairRDD<Integer, Tuple2<Iterable<String>, Iterable<Integer>>> joinRdd=
+        //一个key join上的所有value，都给放入一个Iterable里面去了
         studentRdd.cogroup(scoreRdd)
-                .foreach(new VoidFunction<Tuple2<Integer, Tuple2<Iterable<String>, Iterable<Integer>>>>() {
-                    @Override
-                    public void call(Tuple2<Integer, Tuple2<Iterable<String>, Iterable<Integer>>> tuple) throws Exception {
-                        System.out.println(tuple._1 + ":" + tuple._2._1 + "," + tuple._2._2);
-                    }
-                });
+                .foreach((VoidFunction<Tuple2<Integer, Tuple2<Iterable<String>, Iterable<Integer>>>>) tuple ->
+                        System.out.println(tuple._1 + ":" + tuple._2._1 + "," + tuple._2._2));
     }
 }
