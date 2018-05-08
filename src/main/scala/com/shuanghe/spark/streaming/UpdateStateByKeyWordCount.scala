@@ -19,7 +19,7 @@ object UpdateStateByKeyWordCount {
 
         val kafkaParams: Map[String, String] = Map[String, String]("metadata.broker.list" -> "shuanghe.com:9092")
 
-        val topics = Set[String]("test")
+        val topics: Set[String] = Set[String]("test")
 
         val messages: InputDStream[(String, String)] = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](ssc, kafkaParams, topics)
 
