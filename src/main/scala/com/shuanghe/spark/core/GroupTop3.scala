@@ -18,15 +18,15 @@ object GroupTop3 {
         }
         }.groupByKey()
 
-        val resultRdd: RDD[(String, Array[Int])] = groupRdd.map { tuple => {
+        val resultRdd: RDD[(String, Array[Int])] = groupRdd.map { case (key: String, value: Iterable[Int]) => {
             //            val list: List[Int] = tuple._2.toList
             //
             //            val value: List[Int] = list.sorted.reverse.take(3)
             //            (tuple._1, value)
 
             //性能优化版
-            val key: String = tuple._1
-            val value: Iterable[Int] = tuple._2
+            //            val key: String = tuple._1
+            //            val value: Iterable[Int] = tuple._2
 
             val number: Int = 3
             var top3 = new Array[Int](3)

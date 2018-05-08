@@ -27,58 +27,51 @@ public class GroupTop3Java {
 
         JavaRDD<String> rdd = sc.textFile("file:///home/yushuanghe/test/data/score.txt", 2);
 
-        JavaPairRDD<String, Integer> pairRdd = rdd.mapToPair(new PairFunction<String, String, Integer>() {
-
-            @Override
-            public Tuple2<String, Integer> call(String s) throws Exception {
-                String[] strs = s.split(" ");
-                return new Tuple2<>(strs[0], Integer.parseInt(strs[1]));
-            }
+        JavaPairRDD<String, Integer> pairRdd = rdd.mapToPair((PairFunction<String, String, Integer>) s -> {
+            String[] strs = s.split(" ");
+            return new Tuple2<>(strs[0], Integer.parseInt(strs[1]));
         });
 
         JavaPairRDD<String, Iterable<Integer>> groupRdd = pairRdd.groupByKey();
 
-        JavaPairRDD<String, Iterable<Integer>> groupTopRdd = groupRdd.mapToPair(new PairFunction<Tuple2<String, Iterable<Integer>>, String, Iterable<Integer>>() {
-            @Override
-            public Tuple2<String, Iterable<Integer>> call(Tuple2<String, Iterable<Integer>> tuple) throws Exception {
-                String key = tuple._1;
-                Iterable<Integer> list = tuple._2;
-                //List<Integer> list = new ArrayList<>();
-                //
-                //for (Integer a_2 : tuple._2) {
-                //    list.add(a_2);
-                //}
-                //
-                //list.sort((a, b) -> b - a);
-                //
-                //List<Integer> result = Arrays.asList(list.get(0), list.get(1), list.get(2));
-                //
-                //return new Tuple2<>(tuple._1, result);
+        JavaPairRDD<String, Iterable<Integer>> groupTopRdd = groupRdd.mapToPair((PairFunction<Tuple2<String, Iterable<Integer>>, String, Iterable<Integer>>) tuple -> {
+            String key = tuple._1;
+            Iterable<Integer> list = tuple._2;
+            //List<Integer> list = new ArrayList<>();
+            //
+            //for (Integer a_2 : tuple._2) {
+            //    list.add(a_2);
+            //}
+            //
+            //list.sort((a, b) -> b - a);
+            //
+            //List<Integer> result = Arrays.asList(list.get(0), list.get(1), list.get(2));
+            //
+            //return new Tuple2<>(tuple._1, result);
 
-                //性能优化版
-                int number = 3;//要取的topn数量
-                Integer[] top3 = new Integer[number];
+            //性能优化版
+            int number = 3;//要取的topn数量
+            Integer[] top3 = new Integer[number];
 
-                for (int iter : list) {
+            for (int iter : list) {
 
-                    for (int i = 0; i < number; i++) {
-                        if (top3[i] == null) {
-                            top3[i] = iter;
-                            break;
-                        } else if (iter > top3[i]) {
-                            for (int j = number - 1; j > i; j--) {
-                                top3[j] = top3[j - 1];
-                            }
-
-                            top3[i] = iter;
-                            break;
+                for (int i = 0; i < number; i++) {
+                    if (top3[i] == null) {
+                        top3[i] = iter;
+                        break;
+                    } else if (iter > top3[i]) {
+                        for (int j = number - 1; j > i; j--) {
+                            top3[j] = top3[j - 1];
                         }
-                    }
 
+                        top3[i] = iter;
+                        break;
+                    }
                 }
 
-                return new Tuple2<>(key, Arrays.asList(top3));
             }
+
+            return new Tuple2<>(key, Arrays.asList(top3));
         });
 
         groupTopRdd.foreach(x -> System.out.println(x));
