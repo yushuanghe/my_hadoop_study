@@ -30,7 +30,7 @@ object WindowHotWord {
 
         val searchWordPairDStream: DStream[(String, Int)] = searchWordsDStream.map((word: String) => (word, 1))
 
-        val searchWordCountsDStream = searchWordPairDStream.reduceByKeyAndWindow((v1: Int, v2: Int) => v1 + v2
+        val searchWordCountsDStream: DStream[(String, Int)] = searchWordPairDStream.reduceByKeyAndWindow((v1: Int, v2: Int) => v1 + v2
             , Seconds(60), Seconds(10))
 
         val finalDStream: DStream[(String, Int)] = searchWordCountsDStream.transform {
