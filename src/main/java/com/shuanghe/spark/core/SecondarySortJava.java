@@ -30,21 +30,21 @@ public class SecondarySortJava {
 
         JavaRDD<String> rdd = sc.textFile("file:///home/yushuanghe/test/data/sort.txt", 2);
 
-        JavaPairRDD<SecondarySortKey, String> secondaryRdd = rdd.mapToPair(new PairFunction<String, SecondarySortKey, String>() {
+        JavaPairRDD<SecondarySortKeyJava, String> secondaryRdd = rdd.mapToPair(new PairFunction<String, SecondarySortKeyJava, String>() {
 
             @Override
-            public Tuple2<SecondarySortKey, String> call(String s) throws Exception {
-                String[] strs = s.split(" ");
-                return new Tuple2<>(new SecondarySortKey(Integer.parseInt(strs[0]), Integer.parseInt(strs[1])), s);
+            public Tuple2<SecondarySortKeyJava, String> call(String line) throws Exception {
+                String[] strs = line.split(" ");
+                return new Tuple2<>(new SecondarySortKeyJava(Integer.parseInt(strs[0]), Integer.parseInt(strs[1])), line);
             }
         });
 
-        JavaPairRDD<SecondarySortKey, String> secondarySortRdd = secondaryRdd.sortByKey();
+        JavaPairRDD<SecondarySortKeyJava, String> secondarySortRdd = secondaryRdd.sortByKey();
 
-        JavaRDD<String> resultRdd = secondarySortRdd.map(new Function<Tuple2<SecondarySortKey, String>, String>() {
+        JavaRDD<String> resultRdd = secondarySortRdd.map(new Function<Tuple2<SecondarySortKeyJava, String>, String>() {
             @Override
-            public String call(Tuple2<SecondarySortKey, String> v1) throws Exception {
-                return v1._2;
+            public String call(Tuple2<SecondarySortKeyJava, String> tuple) throws Exception {
+                return tuple._2;
             }
         });
 
