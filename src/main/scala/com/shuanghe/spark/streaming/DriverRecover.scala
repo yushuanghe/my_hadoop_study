@@ -41,6 +41,7 @@ object DriverRecover {
                 Option(newValue)
             })
 
+            result.checkpoint(Seconds(10))
             result.print()
 
             ssc

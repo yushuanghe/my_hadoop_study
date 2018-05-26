@@ -84,9 +84,8 @@ public class DriverRecoverJava {
                     return Optional.of(newValue);
                 });
 
+        result.checkpoint(Durations.seconds(10));
         result.print();
-        //result.checkpoint(Durations.seconds(10));
-
 
         result.foreachRDD((VoidFunction<JavaPairRDD<String, Integer>>) (rdd) -> {
             LongAccumulator accumulator = JavaDroppedWordsCounter.getInstance(JavaSparkContext.fromSparkContext(rdd.context()));
