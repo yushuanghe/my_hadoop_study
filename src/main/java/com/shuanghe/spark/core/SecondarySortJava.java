@@ -19,6 +19,8 @@ import scala.Tuple2;
  * 2、将包含文本的RDD，映射成key为自定义key，value为文本的JavaPairRDD
  * 3、使用sortByKey算子按照自定义的key进行排序
  * 4、再次映射，剔除自定义的key，只保留文本行
+ *
+ * @author yusuhanghe
  */
 public class SecondarySortJava {
     public static void main(String[] args) {

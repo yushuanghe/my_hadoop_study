@@ -16,6 +16,8 @@ import java.util.Arrays;
  * Time: 上午12:57
  * To change this template use File | Settings | File Templates.
  * Description:分组top3
+ *
+ * @author yusuhanghe
  */
 public class GroupTop3Java {
     public static void main(String[] args) {
@@ -50,7 +52,8 @@ public class GroupTop3Java {
             //return new Tuple2<>(tuple._1, result);
 
             //性能优化版
-            int number = 3;//要取的topn数量
+            //要取的topn数量
+            int number = 3;
             Integer[] top3 = new Integer[number];
 
             for (int iter : list) {
