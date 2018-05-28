@@ -108,7 +108,7 @@ public class MockData {
          */
 
         rows.clear();
-        String[] sexes = new String[]{"male", "female"};
+        String[] genders = new String[]{"male", "female"};
         for (int i = 0; i < 100; i++) {
             long userid = i;
             String username = "user" + i;
@@ -116,10 +116,10 @@ public class MockData {
             int age = random.nextInt(60);
             String professional = "professional" + random.nextInt(100);
             String city = "city" + random.nextInt(100);
-            String sex = sexes[random.nextInt(2)];
+            String gender = genders[random.nextInt(2)];
 
             Row row = RowFactory.create(userid, username, name, age,
-                    professional, city, sex);
+                    professional, city, gender);
             rows.add(row);
         }
 

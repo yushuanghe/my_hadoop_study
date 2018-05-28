@@ -73,7 +73,7 @@ public interface Constants {
     String PARAM_END_AGE = "endAge";
     String PARAM_PROFESSIONALS = "professionals";
     String PARAM_CITIES = "cities";
-    String PARAM_SEX = "sex";
+    String PARAM_GENDER = "gender";
     String PARAM_KEYWORDS = "keywords";
     String PARAM_CATEGORY_IDS = "categoryIds";
     String PARAM_TARGET_PAGE_FLOW = "targetPageFlow";
