@@ -1,5 +1,6 @@
 package com.shuanghe.util;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -134,6 +135,21 @@ public class DateUtils {
      */
     public static String formatTime(Date date) {
         return TIME_FORMAT.format(date);
+    }
+
+    /**
+     * 根据时间字符串返回date
+     *
+     * @param date
+     * @return
+     */
+    public static Date parseTime(String date) {
+        try {
+            return TIME_FORMAT.parse(date);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 }

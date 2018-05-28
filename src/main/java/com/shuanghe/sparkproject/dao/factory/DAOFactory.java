@@ -1,6 +1,8 @@
 package com.shuanghe.sparkproject.dao.factory;
 
+import com.shuanghe.sparkproject.dao.ISessionAggrStatDAO;
 import com.shuanghe.sparkproject.dao.ITaskDAO;
+import com.shuanghe.sparkproject.dao.impl.SessionAggrStatDAOImpl;
 import com.shuanghe.sparkproject.dao.impl.TaskDAOImpl;
 
 /**
@@ -19,4 +21,7 @@ public class DAOFactory {
         return new TaskDAOImpl();
     }
 
+    public static ISessionAggrStatDAO getSessionAggrStatDAO() {
+        return new SessionAggrStatDAOImpl();
+    }
 }
