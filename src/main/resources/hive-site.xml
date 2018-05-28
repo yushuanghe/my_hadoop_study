@@ -3,7 +3,7 @@
 <configuration>
     <property>
         <name>javax.jdo.option.ConnectionURL</name>
-        <value>jdbc:mysql://localhost:3306/hive?createDatabaseIfNotExist=true</value>
+        <value>jdbc:mysql://shuanghe.com:3306/hive?createDatabaseIfNotExist=true</value>
         <description>JDBC connect string for a JDBC metastore</description>
     </property>
     <property>
@@ -57,7 +57,7 @@
 
     <property>
         <name>hive.hwi.war.file</name>
-        <value>lib/hive-hwi-1.1.0-cdh5.7.0.jar</value>
+        <value>lib/hive-hwi-1.2.2.jar</value>
     </property>
 
     <property>
