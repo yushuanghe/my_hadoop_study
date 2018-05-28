@@ -26,8 +26,7 @@ import org.apache.spark.sql.hive.HiveContext;
 import parquet.it.unimi.dsi.fastutil.ints.IntList;
 import scala.Tuple2;
 
-import java.util.Date;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * 用户访问session分析Spark作业
@@ -205,8 +204,17 @@ public class UserVisitSessionAnalyzeSpark {
 
          计算出来的结果，在J2EE中，是怎么显示的，是用两张柱状图显示
          */
-        filteredSessionid2AggrInfoRDD.foreach(rdd -> System.out.println(rdd));
-        System.out.println(filteredSessionid2AggrInfoRDD.count());
+
+        randomExtractSession(filteredSessionid2AggrInfoRDD);
+
+        /*
+         特别说明
+         我们知道，要将上一个功能的session聚合统计数据获取到，就必须是在一个action操作触发job之后
+         才能从Accumulator中获取数据，否则是获取不到数据的，因为没有job执行，Accumulator的值为空
+         所以，我们在这里，将随机抽取的功能的实现代码，放在session聚合统计功能的最终计算和写库之前
+         因为随机抽取功能中，有一个countByKey算子，是action操作，会触发job
+         */
+        //System.out.println(filteredSessionid2AggrInfoRDD.count());
 
         // 计算出各个范围的session占比，并写入MySQL
         calculateAndPersistAggrStat(sessionAggrStatAccumulator.value(),
@@ -409,7 +417,8 @@ public class UserVisitSessionAnalyzeSpark {
                                 + Constants.FIELD_SEARCH_KEYWORDS + "=" + searchKeywords + "|"
                                 + Constants.FIELD_CLICK_CATEGORY_IDS + "=" + clickCategoryIds
                                 + Constants.FIELD_VISIT_LENGTH + "=" + visitLength + "|"
-                                + Constants.FIELD_STEP_LENGTH + "=" + stepLength;
+                                + Constants.FIELD_STEP_LENGTH + "=" + stepLength
+                                + Constants.FIELD_START_TIME + "=" + DateUtils.formatTime(startTime);
 
                         return new Tuple2<>(userid, partAggrInfo);
                     }
@@ -471,110 +480,6 @@ public class UserVisitSessionAnalyzeSpark {
                 });
 
         return sessionid2FullAggrInfoRDD;
-    }
-
-    /**
-     * 过滤session数据
-     *
-     * @param sessionid2AggrInfoRDD
-     * @return
-     */
-    private static JavaPairRDD<String, String> filterSession(
-            JavaPairRDD<String, String> sessionid2AggrInfoRDD,
-            final JSONObject taskParam) {
-        /*
-        为了使用我们后面的 ValidUtils ，所以，首先将所有的筛选参数拼接成一个连接串
-        此外，这里其实大家不要觉得是多此一举
-        其实我们是给后面的性能优化埋下了一个伏笔
-        */
-        String startAge = ParamUtils.getParam(taskParam, Constants.PARAM_START_AGE);
-        String endAge = ParamUtils.getParam(taskParam, Constants.PARAM_END_AGE);
-        String professionals = ParamUtils.getParam(taskParam, Constants.PARAM_PROFESSIONALS);
-        String cities = ParamUtils.getParam(taskParam, Constants.PARAM_CITIES);
-        String gender = ParamUtils.getParam(taskParam, Constants.PARAM_GENDER);
-        String keywords = ParamUtils.getParam(taskParam, Constants.PARAM_KEYWORDS);
-        String categoryIds = ParamUtils.getParam(taskParam, Constants.PARAM_CATEGORY_IDS);
-
-        String _parameter = (startAge != null ? Constants.PARAM_START_AGE + "=" + startAge + "|" : "")
-                + (endAge != null ? Constants.PARAM_END_AGE + "=" + endAge + "|" : "")
-                + (professionals != null ? Constants.PARAM_PROFESSIONALS + "=" + professionals + "|" : "")
-                + (cities != null ? Constants.PARAM_CITIES + "=" + cities + "|" : "")
-                + (gender != null ? Constants.PARAM_GENDER + "=" + gender + "|" : "")
-                + (keywords != null ? Constants.PARAM_KEYWORDS + "=" + keywords + "|" : "")
-                + (categoryIds != null ? Constants.PARAM_CATEGORY_IDS + "=" + categoryIds : "");
-
-        //if (_parameter.endsWith("\\|")) {
-        //    _parameter = _parameter.substring(0, _parameter.length() - 1);
-        //}
-        _parameter = StringUtils.trimComma(_parameter);
-
-        final String parameter = _parameter;
-
-        // 根据筛选参数进行过滤
-        JavaPairRDD<String, String> filteredSessionid2AggrInfoRDD = sessionid2AggrInfoRDD.filter(
-
-                new Function<Tuple2<String, String>, Boolean>() {
-
-                    private static final long serialVersionUID = 1L;
-
-                    @Override
-                    public Boolean call(Tuple2<String, String> tuple) throws Exception {
-                        // 首先，从tuple中，获取聚合数据
-                        String aggrInfo = tuple._2;
-
-                        // 接着，依次按照筛选条件进行过滤
-                        // 按照年龄范围进行过滤（startAge、endAge）
-                        if (!ValidUtils.between(aggrInfo, Constants.FIELD_AGE,
-                                parameter, Constants.PARAM_START_AGE, Constants.PARAM_END_AGE)) {
-                            return false;
-                        }
-
-                        // 按照职业范围进行过滤（professionals）
-                        // 互联网,IT,软件
-                        // 互联网
-                        if (!ValidUtils.in(aggrInfo, Constants.FIELD_PROFESSIONAL,
-                                parameter, Constants.PARAM_PROFESSIONALS)) {
-                            return false;
-                        }
-
-                        // 按照城市范围进行过滤（cities）
-                        // 北京,上海,广州,深圳
-                        // 成都
-                        if (!ValidUtils.in(aggrInfo, Constants.FIELD_CITY,
-                                parameter, Constants.PARAM_CITIES)) {
-                            return false;
-                        }
-
-                        // 按照性别进行过滤
-                        // 男/女
-                        // 男，女
-                        if (!ValidUtils.equal(aggrInfo, Constants.FIELD_GENDER,
-                                parameter, Constants.PARAM_GENDER)) {
-                            return false;
-                        }
-
-                        // 按照搜索词进行过滤
-                        // 我们的session可能搜索了 火锅,蛋糕,烧烤
-                        // 我们的筛选条件可能是 火锅,串串香,iphone手机
-                        // 那么，in这个校验方法，主要判定session搜索的词中，有任何一个，与筛选条件中
-                        // 任何一个搜索词相当，即通过
-                        if (!ValidUtils.in(aggrInfo, Constants.FIELD_SEARCH_KEYWORDS,
-                                parameter, Constants.PARAM_KEYWORDS)) {
-                            return false;
-                        }
-
-                        // 按照点击品类id进行过滤
-                        if (!ValidUtils.in(aggrInfo, Constants.FIELD_CLICK_CATEGORY_IDS,
-                                parameter, Constants.PARAM_CATEGORY_IDS)) {
-                            return false;
-                        }
-
-                        return true;
-                    }
-
-                });
-
-        return filteredSessionid2AggrInfoRDD;
     }
 
     /**
@@ -844,4 +749,135 @@ public class UserVisitSessionAnalyzeSpark {
         sessionAggrStatDAO.insert(sessionAggrStat);
     }
 
+    /**
+     * 随机抽取session
+     * <p>
+     * 每一次执行用户访问session分析模块，要抽取出100个session
+     * <p>
+     * session随机抽取：按每天的每个小时的session数量，占当天session总数的比例，乘以每天要抽取的session数量，计算出每个小时要抽取的session数量；然后呢，在每天每小时的session中，随机抽取出之前计算出来的数量的session。
+     * <p>
+     * 举例：10000个session，100个session；0点~1点之间，有2000个session，占总session的比例就是0.2；按照比例，0点~1点需要抽取出来的session数量是100 * 0.2 = 20个；在0点~点的2000个session中，随机抽取出来20个session。
+     * <p>
+     * 我们之前有什么数据：session粒度的聚合数据（计算出来session的start_time）
+     * <p>
+     * session聚合数据进行映射，将每个session发生的yyyy-MM-dd_HH（start_time）作为key，value就是session_id
+     * 对上述数据，使用countByKey算子，就可以获取到每天每小时的session数量
+     * <p>
+     * （按时间比例随机抽取算法）每天每小时有多少session，根据这个数量计算出每天每小时的session占比，以及按照占比，需要抽取多少session，可以计算出每个小时内，从0~session数量之间的范围中，获取指定抽取数量个随机数，作为随机抽取的索引
+     * <p>
+     * 把之前转换后的session数据（以yyyy-MM-dd_HH作为key），执行groupByKey算子；然后可以遍历每天每小时的session，遍历时，遇到之前计算出来的要抽取的索引，即将session抽取出来；抽取出来的session，直接写入MySQL数据库
+     *
+     * @param sessionid2AggrInfoRDD
+     */
+    private static void randomExtractSession(JavaPairRDD<String, String> sessionid2AggrInfoRDD) {
+        // 第一步，计算出每天每小时的session数量，获取<yyyy-MM-dd_HH,sessionid>格式的RDD
+        JavaPairRDD<String, String> time2sessionidRDD = sessionid2AggrInfoRDD.mapToPair(
+
+                new PairFunction<Tuple2<String, String>, String, String>() {
+
+                    private static final long serialVersionUID = 1L;
+
+                    @Override
+                    public Tuple2<String, String> call(Tuple2<String, String> tuple) throws Exception {
+                        String aggrInfo = tuple._2;
+
+                        String startTime = StringUtils.getFieldFromConcatString(
+                                aggrInfo, "\\|", Constants.FIELD_START_TIME);
+                        String dateHour = DateUtils.getDateHour(startTime);
+
+                        return new Tuple2<>(dateHour, aggrInfo);
+                    }
+
+                });
+
+        /*
+         思考一下：这里我们不要着急写大量的代码，做项目的时候，一定要用脑子多思考
+
+         每天每小时的session数量，然后计算出每天每小时的session抽取索引，遍历每天每小时session
+         首先抽取出的session的聚合数据，写入session_random_extract表
+         所以第一个RDD的value，应该是session聚合数据
+         */
+
+        // 得到每天每小时的session数量
+        Map<String, Long> countMap = time2sessionidRDD.countByKey();
+
+        // 第二步，使用按时间比例随机抽取算法，计算出每天每小时要抽取session的索引
+
+        // 将<yyyy-MM-dd_HH,count>格式的map，转换成<yyyy-MM-dd,<HH,count>>的格式
+        Map<String, Map<String, Long>> dateHourCountMap = new HashMap<>();
+
+        for (Map.Entry<String, Long> countEntry : countMap.entrySet()) {
+            String dateHour = countEntry.getKey();
+            String date = dateHour.split("_")[0];
+            String hour = dateHour.split("_")[1];
+
+            long count = countEntry.getValue();
+
+            Map<String, Long> hourCountMap = dateHourCountMap.get(date);
+            if (hourCountMap == null) {
+                hourCountMap = new HashMap<>();
+                dateHourCountMap.put(date, hourCountMap);
+            }
+
+            hourCountMap.put(hour, count);
+        }
+
+        // 开始实现我们的按时间比例随机抽取算法
+
+        // 总共要抽取100个session，先按照天数，进行平分
+        int extractNumberPerDay = 100 / dateHourCountMap.size();
+
+        // <date,<hour,(3,5,20,102)>>
+        Map<String, Map<String, List<Integer>>> dateHourExtractMap = new HashMap<>();
+
+        Random random = new Random();
+
+        for (Map.Entry<String, Map<String, Long>> dateHourCountEntry : dateHourCountMap.entrySet()) {
+            String date = dateHourCountEntry.getKey();
+            Map<String, Long> hourCountMap = dateHourCountEntry.getValue();
+
+            // 计算出这一天的session总数
+            long sessionCount = 0L;
+            for (long hourCount : hourCountMap.values()) {
+                sessionCount += hourCount;
+            }
+
+            Map<String, List<Integer>> hourExtractMap = dateHourExtractMap.get(date);
+            if (hourExtractMap == null) {
+                hourExtractMap = new HashMap<>();
+                dateHourExtractMap.put(date, hourExtractMap);
+            }
+
+            // 遍历每个小时
+            for (Map.Entry<String, Long> hourCountEntry : hourCountMap.entrySet()) {
+                String hour = hourCountEntry.getKey();
+                long count = hourCountEntry.getValue();
+
+                // 计算每个小时的session数量，占据当天总session数量的比例，直接乘以每天要抽取的数量
+                // 就可以计算出，当前小时需要抽取的session数量
+                int hourExtractNumber = (int) (((double) count / (double) sessionCount) * extractNumberPerDay);
+                if (hourExtractNumber > count) {
+                    hourExtractNumber = (int) count;
+                }
+
+                // 先获取当前小时的存放随机数的list
+                List<Integer> extractIndexList = hourExtractMap.get(hour);
+                if (extractIndexList == null) {
+                    extractIndexList = new ArrayList<>();
+                    hourExtractMap.put(hour, extractIndexList);
+                }
+
+                // 生成上面计算出来的数量的随机数
+                for (int i = 0; i < hourExtractNumber; i++) {
+                    int extractIndex = random.nextInt((int) count);
+                    while (extractIndexList.contains(extractIndex)) {
+                        extractIndex = random.nextInt((int) count);
+                    }
+                    extractIndexList.add(extractIndex);
+                }
+            }
+
+        }
+
+    }
 }
