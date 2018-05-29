@@ -1,13 +1,7 @@
 package com.shuanghe.sparkproject.dao.factory;
 
-import com.shuanghe.sparkproject.dao.ISessionAggrStatDAO;
-import com.shuanghe.sparkproject.dao.ISessionDetailDAO;
-import com.shuanghe.sparkproject.dao.ISessionRandomExtractDAO;
-import com.shuanghe.sparkproject.dao.ITaskDAO;
-import com.shuanghe.sparkproject.dao.impl.SessionAggrStatDAOImpl;
-import com.shuanghe.sparkproject.dao.impl.SessionDetailDAOImpl;
-import com.shuanghe.sparkproject.dao.impl.SessionRandomExtractDAOImpl;
-import com.shuanghe.sparkproject.dao.impl.TaskDAOImpl;
+import com.shuanghe.sparkproject.dao.*;
+import com.shuanghe.sparkproject.dao.impl.*;
 
 /**
  * DAO工厂类
@@ -35,5 +29,9 @@ public class DAOFactory {
 
     public static ISessionDetailDAO getSessionDetailDAO() {
         return new SessionDetailDAOImpl();
+    }
+
+    public static ITop10CategoryDAO getTop10CategoryDAO() {
+        return new Top10CategoryDAOImpl();
     }
 }
