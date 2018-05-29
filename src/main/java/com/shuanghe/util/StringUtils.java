@@ -68,10 +68,15 @@ public class StringUtils {
     public static String getFieldFromConcatString(String str, String delimiter, String field) {
         String[] fields = str.split(delimiter);
         for (String concatField : fields) {
-            String fieldName = concatField.split("=")[0];
-            String fieldValue = concatField.split("=")[1];
-            if (fieldName.equals(field)) {
-                return fieldValue;
+            if (isNotEmpty(concatField)) {
+                String[] strs = concatField.split("=");
+                if (strs.length == 2) {
+                    String fieldName = strs[0];
+                    String fieldValue = strs[1];
+                    if (fieldName.equals(field)) {
+                        return fieldValue;
+                    }
+                }
             }
         }
         return null;

@@ -12,7 +12,9 @@ import scala.math.Ordered;
  * Description:自定义二次排序key
  */
 public class SecondarySortKeyJava implements Ordered<SecondarySortKeyJava>, Serializable {
-    //在自定义key里定义要进行排序的列，需要getter，setter，hashcode，equals方法
+    /**
+     * 在自定义key里定义要进行排序的列，需要getter，setter，hashcode，equals方法
+     */
     private int first;
     private int second;
 
@@ -97,12 +99,18 @@ public class SecondarySortKeyJava implements Ordered<SecondarySortKeyJava>, Seri
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof SecondarySortKeyJava)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof SecondarySortKeyJava)) {
+            return false;
+        }
 
         SecondarySortKeyJava that = (SecondarySortKeyJava) o;
 
-        if (getFirst() != that.getFirst()) return false;
+        if (getFirst() != that.getFirst()) {
+            return false;
+        }
         return getSecond() == that.getSecond();
     }
 
