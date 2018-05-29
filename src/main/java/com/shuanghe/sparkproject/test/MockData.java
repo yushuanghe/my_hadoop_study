@@ -99,7 +99,7 @@ public class MockData {
         //}
 
         df.registerTempTable("user_visit_action");
-        df.show();
+        df.show(10);
         Dataset<Row> a = sqlContext.sql("select count(1) from user_visit_action");
         a.show();
 
@@ -140,7 +140,7 @@ public class MockData {
         //}
 
         df2.registerTempTable("user_info");
-        df2.show();
+        df2.show(10);
         Dataset<Row> a2 = sqlContext.sql("select count(1) from user_info");
         a2.show();
     }
