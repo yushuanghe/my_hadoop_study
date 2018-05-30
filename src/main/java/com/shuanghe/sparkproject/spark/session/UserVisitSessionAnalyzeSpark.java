@@ -1032,30 +1032,7 @@ public class UserVisitSessionAnalyzeSpark {
             public void call(Tuple2<String, Tuple2<String, Row>> tuple) throws Exception {
                 Row row = tuple._2._2;
 
-                SessionDetail sessionDetail = new SessionDetail();
-                sessionDetail.setTaskid(taskid);
-                sessionDetail.setUserid(row.getAs("user_id"));
-                sessionDetail.setSessionid(row.getAs("session_id"));
-                sessionDetail.setPageid(row.getAs("page_id"));
-                sessionDetail.setActionTime(row.getAs("action_time"));
-                sessionDetail.setSearchKeyword(row.getAs("search_keyword"));
-
-                Long clickCategoryId = row.getAs("click_category_id");
-                if (clickCategoryId == null) {
-                    clickCategoryId = -1L;
-                }
-                sessionDetail.setClickCategoryId(clickCategoryId);
-
-                Long clickProductId = row.getAs("click_product_id");
-                if (clickProductId == null) {
-                    clickProductId = -1L;
-                }
-                sessionDetail.setClickProductId(clickProductId);
-
-                sessionDetail.setOrderCategoryIds(row.getAs("order_category_ids"));
-                sessionDetail.setOrderProductIds(row.getAs("order_product_ids"));
-                sessionDetail.setPayCategoryIds(row.getAs("pay_category_ids"));
-                sessionDetail.setPayProductIds(row.getAs("pay_product_ids"));
+                SessionDetail sessionDetail = new SessionDetail(taskid, row);
 
                 ISessionDetailDAO sessionDetailDAO = DAOFactory.getSessionDetailDAO();
                 sessionDetailDAO.insert(sessionDetail);
@@ -1691,30 +1668,7 @@ public class UserVisitSessionAnalyzeSpark {
             public void call(Tuple2<String, Tuple2<String, Row>> tuple) throws Exception {
                 Row row = tuple._2._2;
 
-                SessionDetail sessionDetail = new SessionDetail();
-                sessionDetail.setTaskid(taskid);
-                sessionDetail.setUserid(row.getAs("user_id"));
-                sessionDetail.setSessionid(row.getAs("session_id"));
-                sessionDetail.setPageid(row.getAs("page_id"));
-                sessionDetail.setActionTime(row.getAs("action_time"));
-                sessionDetail.setSearchKeyword(row.getAs("search_keyword"));
-
-                Long clickCategoryId = row.getAs("click_category_id");
-                if (clickCategoryId == null) {
-                    clickCategoryId = -1L;
-                }
-                sessionDetail.setClickCategoryId(clickCategoryId);
-
-                Long clickProductId = row.getAs("click_product_id");
-                if (clickProductId == null) {
-                    clickProductId = -1L;
-                }
-                sessionDetail.setClickProductId(clickProductId);
-
-                sessionDetail.setOrderCategoryIds(row.getAs("order_category_ids"));
-                sessionDetail.setOrderProductIds(row.getAs("order_product_ids"));
-                sessionDetail.setPayCategoryIds(row.getAs("pay_category_ids"));
-                sessionDetail.setPayProductIds(row.getAs("pay_product_ids"));
+                SessionDetail sessionDetail = new SessionDetail(taskid, row);
 
                 ISessionDetailDAO sessionDetailDAO = DAOFactory.getSessionDetailDAO();
                 sessionDetailDAO.insert(sessionDetail);

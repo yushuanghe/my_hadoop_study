@@ -1,5 +1,7 @@
 package com.shuanghe.sparkproject.domain;
 
+import org.apache.spark.sql.Row;
+
 /**
  * Description:Session明细
  * <p>
@@ -21,6 +23,36 @@ public class SessionDetail {
     private String orderProductIds;
     private String payCategoryIds;
     private String payProductIds;
+
+    public SessionDetail() {
+    }
+
+    public SessionDetail(long taskid, Row row) {
+        super();
+        this.setTaskid(taskid);
+        this.setUserid(row.getAs("user_id"));
+        this.setSessionid(row.getAs("session_id"));
+        this.setPageid(row.getAs("page_id"));
+        this.setActionTime(row.getAs("action_time"));
+        this.setSearchKeyword(row.getAs("search_keyword"));
+
+        Long clickCategoryId = row.getAs("click_category_id");
+        if (clickCategoryId == null) {
+            clickCategoryId = -1L;
+        }
+        this.setClickCategoryId(clickCategoryId);
+
+        Long clickProductId = row.getAs("click_product_id");
+        if (clickProductId == null) {
+            clickProductId = -1L;
+        }
+        this.setClickProductId(clickProductId);
+
+        this.setOrderCategoryIds(row.getAs("order_category_ids"));
+        this.setOrderProductIds(row.getAs("order_product_ids"));
+        this.setPayCategoryIds(row.getAs("pay_category_ids"));
+        this.setPayProductIds(row.getAs("pay_product_ids"));
+    }
 
     public long getTaskid() {
         return taskid;
