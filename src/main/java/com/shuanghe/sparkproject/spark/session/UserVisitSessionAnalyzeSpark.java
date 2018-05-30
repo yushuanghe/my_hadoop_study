@@ -190,6 +190,11 @@ public class UserVisitSessionAnalyzeSpark {
                 filterSessionAndAggrStat(
                         sessionid2AggrInfoRDD, taskParam, sessionAggrStatAccumulator);
 
+        // 生成公共的RDD：通过筛选条件的session的访问明细数据
+        // <sessionid,row>
+        JavaPairRDD<String, Row> sessionid2detailRDD = getSessionid2detailRDD(
+                filteredSessionid2AggrInfoRDD, sessionid2actionRDD);
+
         /*
          对于Accumulator这种分布式累加计算的变量的使用，有一个重要说明
 
@@ -224,7 +229,9 @@ public class UserVisitSessionAnalyzeSpark {
         calculateAndPersistAggrStat(sessionAggrStatAccumulator.value(),
                 task.getTaskid());
 
-        getTop10Category(taskid, filteredSessionid2AggrInfoRDD, sessionid2actionRDD);
+        // 获取top10热门品类
+        List<Tuple2<CategorySortKey, String>> top10CategoryList =
+                getTop10Category(taskid, sessionid2detailRDD);
 
         // 关闭Spark上下文
         sc.close();
@@ -775,6 +782,32 @@ public class UserVisitSessionAnalyzeSpark {
     }
 
     /**
+     * 获取通过筛选条件的session的访问明细数据RDD
+     *
+     * @param filteredSessionid2AggrInfoRDD
+     * @param sessionid2actionRDD
+     * @return
+     */
+    private static JavaPairRDD<String, Row> getSessionid2detailRDD(
+            JavaPairRDD<String, String> filteredSessionid2AggrInfoRDD,
+            JavaPairRDD<String, Row> sessionid2actionRDD) {
+        JavaPairRDD<String, Row> sessionid2detailRDD = filteredSessionid2AggrInfoRDD
+                .join(sessionid2actionRDD)
+                .mapToPair(new PairFunction<Tuple2<String, Tuple2<String, Row>>, String, Row>() {
+
+                    private static final long serialVersionUID = 1L;
+
+                    @Override
+                    public Tuple2<String, Row> call(
+                            Tuple2<String, Tuple2<String, Row>> tuple) throws Exception {
+                        return new Tuple2<>(tuple._1, tuple._2._2);
+                    }
+
+                });
+        return sessionid2detailRDD;
+    }
+
+    /**
      * 随机抽取session
      * <p>
      * 每一次执行用户访问session分析模块，要抽取出100个session
@@ -1029,34 +1062,19 @@ public class UserVisitSessionAnalyzeSpark {
     /**
      * 获取top10热门品类
      *
-     * @param filteredSessionid2AggrInfoRDD
-     * @param sessionid2actionRDD
+     * @param taskid
+     * @param sessionid2detailRDD
      */
-    private static void getTop10Category(
+    private static List<Tuple2<CategorySortKey, String>> getTop10Category(
             long taskid,
-            JavaPairRDD<String, String> filteredSessionid2AggrInfoRDD,
-            JavaPairRDD<String, Row> sessionid2actionRDD) {
+            JavaPairRDD<String, Row> sessionid2detailRDD) {
 
         // 第一步：获取符合条件的session访问过的所有品类
 
-        // 获取符合条件的session的访问明细
-        JavaPairRDD<String, Row> sessionid2detailRDD = filteredSessionid2AggrInfoRDD
-                .join(sessionid2actionRDD)
-                .mapToPair(new PairFunction<Tuple2<String, Tuple2<String, Row>>, String, Row>() {
-
-                    private static final long serialVersionUID = 1L;
-
-                    @Override
-                    public Tuple2<String, Row> call(
-                            Tuple2<String, Tuple2<String, Row>> tuple) throws Exception {
-                        return new Tuple2<>(tuple._1, tuple._2._2);
-                    }
-
-                });
-
-        // 获取session访问过的所有品类id
-        // 访问过：指的是，点击过、下单过、支付过的品类
-        // <category_id,category_id>
+        /*
+         获取session访问过的所有品类id
+         访问过：指的是，点击过、下单过、支付过的品类
+        */
         JavaPairRDD<Long, Long> categoryidRDD = sessionid2detailRDD.flatMapToPair(
 
                 new PairFlatMapFunction<Tuple2<String, Row>, Long, Long>() {
@@ -1098,6 +1116,13 @@ public class UserVisitSessionAnalyzeSpark {
 
                 });
 
+        /*
+         必须要进行去重
+         如果不去重的话，会出现重复的categoryid，排序会对重复的categoryid已经countInfo进行排序
+         最后很可能会拿到重复的数据
+        */
+        categoryidRDD = categoryidRDD.distinct();
+
         // 第二步：计算各品类的点击、下单和支付的次数
 
         /*
@@ -1118,23 +1143,21 @@ public class UserVisitSessionAnalyzeSpark {
 
         // 第三步：join各品类与它的点击、下单和支付的次数
 
-        /*
-         categoryidRDD 中，是包含了所有的符合条件的session，访问过的品类id
+         /*
+          categoryidRDD中，是包含了所有的符合条件的session，访问过的品类id
 
-         上面分别计算出来的三份，各品类的点击、下单和支付的次数，可能不是包含所有品类的
-         比如，有的品类，就只是被点击过，但是没有人下单和支付
+          上面分别计算出来的三份，各品类的点击、下单和支付的次数，可能不是包含所有品类的
+          比如，有的品类，就只是被点击过，但是没有人下单和支付
 
-         所以，这里，就不能使用join操作，要使用leftOuterJoin操作，就是说，如果categoryidRDD不能
-         join到自己的某个数据，比如点击、或下单、或支付次数，那么该categoryidRDD还是要保留下来的
-         只不过，没有join到的那个数据，就是0了
+          所以，这里，就不能使用join操作，要使用leftOuterJoin操作，就是说，如果categoryidRDD不能
+          join到自己的某个数据，比如点击、或下单、或支付次数，那么该categoryidRDD还是要保留下来的
+          只不过，没有join到的那个数据，就是0了
         */
-
         JavaPairRDD<Long, String> categoryid2countRDD = joinCategoryAndData(
                 categoryidRDD, clickCategoryId2CountRDD, orderCategoryId2CountRDD,
                 payCategoryId2CountRDD);
 
         // 第四步：自定义二次排序key
-        // CategorySortKey
 
         // 第五步：将数据映射成<CategorySortKey,info>格式的RDD，然后进行二次排序（降序）
 
@@ -1195,6 +1218,8 @@ public class UserVisitSessionAnalyzeSpark {
 
             top10CategoryDAO.insert(category);
         }
+
+        return top10CategoryList;
     }
 
     /**
@@ -1394,8 +1419,7 @@ public class UserVisitSessionAnalyzeSpark {
          所以Tuple中的第二个值用Optional<Long>类型，就代表，可能有值，可能没有值
         */
         JavaPairRDD<Long, Tuple2<Long, Optional<Long>>> tmpJoinRDD =
-                categoryidRDD.distinct()
-                        .leftOuterJoin(clickCategoryId2CountRDD);
+                categoryidRDD.leftOuterJoin(clickCategoryId2CountRDD);
 
         JavaPairRDD<Long, String> tmpMapRDD = tmpJoinRDD.mapToPair(
 
