@@ -20,6 +20,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.hive.HiveContext;
+import org.apache.spark.storage.StorageLevel;
 import parquet.it.unimi.dsi.fastutil.ints.IntList;
 import scala.Tuple2;
 
@@ -64,7 +65,7 @@ public class UserVisitSessionAnalyzeSpark {
                 .set("spark.memory.fraction", "0.5")
                 //弃用
                 //.set("spark.shuffle.consolidateFiles", "true")
-                //每个shuffle文件输出流的内存缓冲区大小,这些缓冲区减少了在创建中间随机播放文件时进行的磁盘搜索和系统调用的次数
+                //map输出bucket缓存,单位kb
                 .set("spark.shuffle.file.buffer", "64")
                 //弃用
                 //.set("spark.shuffle.memoryFraction", "0.3")
@@ -85,10 +86,12 @@ public class UserVisitSessionAnalyzeSpark {
                  */
                 .registerKryoClasses(new Class[]{
                         CategorySortKey.class,
+                        //fastutil
                         IntList.class});
         SparkUtils.setMaster(conf);
 
         JavaSparkContext sc = new JavaSparkContext(conf);
+        //sc.checkpointFile("hdfs://shuanghe.com:8020/user/yushuanghe/spark-project");
         SQLContext sqlContext = getSQLContext(sc.sc());
 
         // 生成模拟测试数据
@@ -110,10 +113,38 @@ public class UserVisitSessionAnalyzeSpark {
          如果要进行session粒度的数据聚合
          首先要从 user_visit_action 表中，查询出来指定日期范围内的行为数据
         */
-        JavaRDD<Row> actionRDD = getActionRDDByDateRange(sqlContext, taskParam);
+
+        /*
+         actionRDD，就是一个公共RDD
+         第一，要用ationRDD，获取到一个公共的sessionid为key的PairRDD
+         第二，actionRDD，用在了session聚合环节里面
+
+         sessionid为key的PairRDD，是确定了，在后面要多次使用的
+         1、与通过筛选的sessionid进行join，获取通过筛选的session的明细数据
+         2、将这个RDD，直接传入aggregateBySession方法，进行session聚合统计
+
+         重构完以后，actionRDD，就只在最开始，使用一次，用来生成以sessionid为key的RDD
+        */
+        JavaRDD<Row> actionRDD = SparkUtils.getActionRDDByDateRange(sqlContext, taskParam);
 
         JavaPairRDD<String, Row> sessionid2actionRDD = getSessionid2ActionRDD(actionRDD);
 
+        /*
+         持久化，很简单，就是对RDD调用persist()方法，并传入一个持久化级别
+         
+         如果是persist(StorageLevel.MEMORY_ONLY())，纯内存，无序列化，那么就可以用cache()方法来替代
+         StorageLevel.MEMORY_ONLY_SER()，第二选择
+         StorageLevel.MEMORY_AND_DISK()，第三选择
+         StorageLevel.MEMORY_AND_DISK_SER()，第四选择
+         StorageLevel.DISK_ONLY()，第五选择
+         
+         如果内存充足，要使用双副本高可靠机制
+         选择后缀带_2的策略
+         StorageLevel.MEMORY_ONLY_2()
+        */
+        sessionid2actionRDD = sessionid2actionRDD.persist(StorageLevel.MEMORY_ONLY());
+        //sessionid2actionRDD.checkpoint();
+        
         /*
          首先，可以将行为数据，按照session_id进行groupByKey分组
          此时的数据的粒度就是session粒度了，然后呢，可以将session粒度的数据与用户信息数据，进行join
@@ -121,7 +152,7 @@ public class UserVisitSessionAnalyzeSpark {
          到这里为止，获取的数据是<sessionid,(sessionid,searchKeywords,clickCategoryIds,age,professional,city,gender)>
         */
         JavaPairRDD<String, String> sessionid2AggrInfoRDD =
-                aggregateBySession(sqlContext, actionRDD);
+                aggregateBySession(sc, sqlContext, sessionid2actionRDD);
 
         /*
          接着，就要针对session粒度的聚合数据，按照使用者指定的筛选参数进行数据过滤
@@ -300,51 +331,50 @@ public class UserVisitSessionAnalyzeSpark {
      * @return
      */
     public static JavaPairRDD<String, Row> getSessionid2ActionRDD(JavaRDD<Row> actionRDD) {
-        return actionRDD.mapToPair(new PairFunction<Row, String, Row>() {
+        //return actionRDD.mapToPair(new PairFunction<Row, String, Row>() {
+        //
+        //    private static final long serialVersionUID = 1L;
+        //
+        //    @Override
+        //    public Tuple2<String, Row> call(Row row) throws Exception {
+        //        return new Tuple2<>(row.getAs("session_id"), row);
+        //    }
+        //
+        //});
 
+        //使用 mapPartitions 算子提升性能
+        return actionRDD.mapPartitionsToPair(new PairFlatMapFunction<Iterator<Row>, String, Row>() {
             private static final long serialVersionUID = 1L;
 
             @Override
-            public Tuple2<String, Row> call(Row row) throws Exception {
-                return new Tuple2<>(row.getAs("session_id"), row);
-            }
+            public Iterator<Tuple2<String, Row>> call(Iterator<Row> rowIterator) throws Exception {
+                List<Tuple2<String, Row>> list = new ArrayList<>();
 
+                while (rowIterator.hasNext()) {
+                    Row row = rowIterator.next();
+                    list.add(new Tuple2<>(row.getAs("session_id"), row));
+                }
+
+                return list.iterator();
+            }
         });
     }
 
     /**
      * 对行为数据按session粒度进行聚合
      *
-     * @param actionRDD 行为数据RDD
+     * @param sc
+     * @param sqlContext
+     * @param sessinoid2actionRDD
      * @return session粒度聚合数据
      */
     private static JavaPairRDD<String, String> aggregateBySession(
-            SQLContext sqlContext, JavaRDD<Row> actionRDD) {
-        /*
-        现在actionRDD中的元素是Row，一个Row就是一行用户访问行为记录，比如一次点击或者搜索
-        我们现在需要将这个Row映射成<sessionid,Row>的格式
-        */
-        JavaPairRDD<String, Row> sessionid2ActionRDD = actionRDD.mapToPair(
-
-                /*
-                 * PairFunction
-                 * 第一个参数，相当于是函数的输入
-                 * 第二个参数和第三个参数，相当于是函数的输出（Tuple），分别是Tuple第一个和第二个值
-                 */
-                new PairFunction<Row, String, Row>() {
-
-                    private static final long serialVersionUID = 1L;
-
-                    @Override
-                    public Tuple2<String, Row> call(Row row) throws Exception {
-                        return new Tuple2<>(row.getAs("session_id"), row);
-                    }
-
-                });
-
+            JavaSparkContext sc,
+            SQLContext sqlContext,
+            JavaPairRDD<String, Row> sessinoid2actionRDD) {
         // 对行为数据按session粒度进行分组
         JavaPairRDD<String, Iterable<Row>> sessionid2ActionsRDD =
-                sessionid2ActionRDD.groupByKey();
+                sessinoid2actionRDD.groupByKey();
 
         // 对每一个session分组进行聚合，将session中所有的搜索词和点击品类都聚合起来
         // 到此为止，获取的数据格式，如下：<userid,partAggrInfo(sessionid,searchKeywords,clickCategoryIds)>
@@ -382,15 +412,15 @@ public class UserVisitSessionAnalyzeSpark {
                             Long clickCategoryId = row.getAs("click_category_id");
 
                             /*
-                            实际上这里要对数据说明一下
-                            并不是每一行访问行为都有searchKeyword何clickCategoryId两个字段的
-                            其实，只有搜索行为，是有searchKeyword字段的
-                            只有点击品类的行为，是有clickCategoryId字段的
-                            所以，任何一行行为数据，都不可能两个字段都有，所以数据是可能出现null值的
+                             实际上这里要对数据说明一下
+                             并不是每一行访问行为都有searchKeyword何clickCategoryId两个字段的
+                             其实，只有搜索行为，是有searchKeyword字段的
+                             只有点击品类的行为，是有clickCategoryId字段的
+                             所以，任何一行行为数据，都不可能两个字段都有，所以数据是可能出现null值的
 
-                            我们决定是否将搜索词或点击品类id拼接到字符串中去
-                            首先要满足：不能是null值
-                            其次，之前的字符串中还没有搜索词或者点击品类id
+                             我们决定是否将搜索词或点击品类id拼接到字符串中去
+                             首先要满足：不能是null值
+                             其次，之前的字符串中还没有搜索词或者点击品类id
                             */
 
                             if (StringUtils.isNotEmpty(searchKeyword)) {
@@ -433,21 +463,21 @@ public class UserVisitSessionAnalyzeSpark {
                         long visitLength = (endTime.getTime() - startTime.getTime()) / 1000;
 
                         /*
-                        大家思考一下
-                        我们返回的数据格式，即使<sessionid,partAggrInfo>
-                        但是，这一步聚合完了以后，其实，我们是还需要将每一行数据，跟对应的用户信息进行聚合
-                        问题就来了，如果是跟用户信息进行聚合的话，那么key，就不应该是sessionid
-                        就应该是userid，才能够跟<userid,Row>格式的用户信息进行聚合
-                        如果我们这里直接返回<sessionid,partAggrInfo>，还得再做一次mapToPair算子
-                        将RDD映射成<userid,partAggrInfo>的格式，那么就多此一举
+                         大家思考一下
+                         我们返回的数据格式，即使<sessionid,partAggrInfo>
+                         但是，这一步聚合完了以后，其实，我们是还需要将每一行数据，跟对应的用户信息进行聚合
+                         问题就来了，如果是跟用户信息进行聚合的话，那么key，就不应该是sessionid
+                         就应该是userid，才能够跟<userid,Row>格式的用户信息进行聚合
+                         如果我们这里直接返回<sessionid,partAggrInfo>，还得再做一次mapToPair算子
+                         将RDD映射成<userid,partAggrInfo>的格式，那么就多此一举
 
-                        所以，我们这里其实可以直接，返回的数据格式，就是<userid,partAggrInfo>
-                        然后跟用户信息join的时候，将partAggrInfo关联上userInfo
-                        然后再直接将返回的Tuple的key设置成sessionid
-                        最后的数据格式，还是<sessionid,fullAggrInfo>
+                         所以，我们这里其实可以直接，返回的数据格式，就是<userid,partAggrInfo>
+                         然后跟用户信息join的时候，将partAggrInfo关联上userInfo
+                         然后再直接将返回的Tuple的key设置成sessionid
+                         最后的数据格式，还是<sessionid,fullAggrInfo>
 
-                        聚合数据，用什么样的格式进行拼接？
-                        我们这里统一定义，使用key=value|key=value
+                         聚合数据，用什么样的格式进行拼接？
+                         我们这里统一定义，使用key=value|key=value
                         */
                         String partAggrInfo = Constants.FIELD_SESSION_ID + "=" + sessionid + "|"
                                 + Constants.FIELD_SEARCH_KEYWORDS + "=" + searchKeywords + "|"
@@ -477,6 +507,13 @@ public class UserVisitSessionAnalyzeSpark {
                     }
 
                 });
+
+        /*
+         这里就可以说一下，比较适合采用reduce join转换为map join的方式
+         
+         userid2PartAggrInfoRDD，可能数据量还是比较大，比如，可能在1千万数据
+         userid2InfoRDD，可能数据量还是比较小的，你的用户数量才10万用户
+         */
 
         // 将session粒度聚合数据，与用户信息进行join
         JavaPairRDD<Long, Tuple2<String, Row>> userid2FullInfoRDD =
@@ -514,6 +551,11 @@ public class UserVisitSessionAnalyzeSpark {
                     }
 
                 });
+
+        /**
+         * reduce join转换为map join
+         */
+        // TODO: 2018/06/05  
 
         return sessionid2FullAggrInfoRDD;
     }

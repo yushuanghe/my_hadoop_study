@@ -80,8 +80,10 @@ public class SparkUtils {
                 "select * "
                         + "from user_visit_action "
                         + "where date>='" + startDate + "' "
-                        + "and date<='" + endDate + "'";
+                        + "and date<='" + endDate + "'"
+                //如果业务可以放弃部分导致倾斜的key,那么直接过滤,则不存在数据倾斜
 //				+ "and session_id not in('','','')"
+                ;
 
         Dataset<Row> actionDF = sqlContext.sql(sql);
 
