@@ -6,7 +6,6 @@ import com.shuanghe.sparkproject.constant.Constants;
 import com.shuanghe.sparkproject.dao.*;
 import com.shuanghe.sparkproject.dao.factory.DAOFactory;
 import com.shuanghe.sparkproject.domain.*;
-import com.shuanghe.sparkproject.spark.SessionAggrStatAccumulator;
 import com.shuanghe.sparkproject.test.MockData;
 import com.shuanghe.util.*;
 import it.unimi.dsi.fastutil.ints.IntArrayList;

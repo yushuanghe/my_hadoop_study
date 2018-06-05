@@ -1,4 +1,4 @@
-package com.shuanghe.sparkproject.spark;
+package com.shuanghe.sparkproject.spark.session;
 
 import com.shuanghe.sparkproject.constant.Constants;
 import com.shuanghe.util.StringUtils;

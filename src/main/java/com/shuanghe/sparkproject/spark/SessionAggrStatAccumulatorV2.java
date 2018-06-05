@@ -1,6 +1,7 @@
 package com.shuanghe.sparkproject.spark;
 
 import com.shuanghe.sparkproject.constant.Constants;
+import com.shuanghe.sparkproject.spark.session.SessionAggrStatAccumulator;
 import org.apache.spark.util.AccumulatorV2;
 
 /**
