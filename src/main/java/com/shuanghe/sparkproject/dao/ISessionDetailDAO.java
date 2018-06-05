@@ -2,6 +2,8 @@ package com.shuanghe.sparkproject.dao;
 
 import com.shuanghe.sparkproject.domain.SessionDetail;
 
+import java.util.List;
+
 /**
  * Description:Session明细DAO接口
  * <p>
@@ -18,4 +20,11 @@ public interface ISessionDetailDAO {
      * @param sessionDetail
      */
     void insert(SessionDetail sessionDetail);
+
+    /**
+     * 批量插入session明细数据
+     *
+     * @param sessionDetails
+     */
+    void insertBatch(List<SessionDetail> sessionDetails);
 }
