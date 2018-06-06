@@ -73,7 +73,8 @@ public class PageOneStepConvertRateSpark {
         所以说呢，页面切片的生成，肯定是要基于用户session粒度的
          */
         JavaPairRDD<String, Row> sessionid2actionRDD = getSessionid2actionRDD(actionRDD);
-        sessionid2actionRDD = sessionid2actionRDD.cache(); // persist(StorageLevel.MEMORY_ONLY)
+        sessionid2actionRDD = sessionid2actionRDD.cache();
+        // persist(StorageLevel.MEMORY_ONLY)
 
         /*
         对<sessionid,访问行为> RDD，做一次groupByKey操作
@@ -96,6 +97,8 @@ public class PageOneStepConvertRateSpark {
         // 计算目标页面流的各个页面切片的转化率
         Map<String, Double> convertRateMap = computePageSplitConvertRate(
                 taskParam, pageSplitPvMap, startPagePv);
+
+        System.out.println(convertRateMap);
 
         // 持久化页面切片转化率
         persistConvertRate(taskid, convertRateMap);
@@ -125,6 +128,8 @@ public class PageOneStepConvertRateSpark {
 
     /**
      * 页面切片生成与匹配算法
+     * <p>
+     * 双重for循环,依次比较排序好的每个页面切片是否在指定的事件流中
      *
      * @param sc
      * @param sessionid2actionsRDD
@@ -206,7 +211,6 @@ public class PageOneStepConvertRateSpark {
                             lastPageId=3
                             5，切片，3_5
                              */
-
                             String pageSplit = lastPageId + "_" + pageid;
 
                             // 对这个切片判断一下，是否在用户指定的页面流中
@@ -288,8 +292,8 @@ public class PageOneStepConvertRateSpark {
             long startPagePv) {
         Map<String, Double> convertRateMap = new HashMap<>();
 
-        String[] targetPages = ParamUtils.getParam(taskParam,
-                Constants.PARAM_TARGET_PAGE_FLOW).split(",");
+        String[] targetPages = ParamUtils.getParam(taskParam, Constants.PARAM_TARGET_PAGE_FLOW)
+                .split(",");
 
         long lastPageSplitPv = 0L;
 
