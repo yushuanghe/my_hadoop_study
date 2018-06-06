@@ -303,8 +303,7 @@ public class PageOneStepConvertRateSpark {
         // 通过for循环，获取目标页面流中的各个页面切片（pv）
         for (int i = 1; i < targetPages.length; i++) {
             String targetPageSplit = targetPages[i - 1] + "_" + targetPages[i];
-            long targetPageSplitPv = Long.valueOf(String.valueOf(
-                    pageSplitPvMap.get(targetPageSplit)));
+            long targetPageSplitPv = pageSplitPvMap.get(targetPageSplit);
 
             double convertRate = 0.0;
 
