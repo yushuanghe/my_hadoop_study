@@ -57,10 +57,11 @@ public class JDBCHelper {
      * 为了保证数据库连接池有且仅有一份，所以就通过单例的方式
      * 保证JDBCHelper只有一个实例，实例中只有一份数据库连接池
      */
-    private static JDBCHelper instance = null;
+    private static volatile JDBCHelper instance = null;
 
     /**
      * 获取单例
+     * 基于双重检查锁定的正确单例模式实现
      *
      * @return 单例
      */
