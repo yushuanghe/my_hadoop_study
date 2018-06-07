@@ -102,6 +102,8 @@ public class PageOneStepConvertRateSpark {
 
         // 持久化页面切片转化率
         persistConvertRate(taskid, convertRateMap);
+
+        sc.close();
     }
 
     /**
