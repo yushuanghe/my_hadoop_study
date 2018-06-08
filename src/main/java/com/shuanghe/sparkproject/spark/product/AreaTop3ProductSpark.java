@@ -14,6 +14,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.sql.Dataset;
@@ -25,10 +26,7 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import scala.Tuple2;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Description:各区域top3热门商品统计Spark作业
@@ -81,10 +79,12 @@ public class AreaTop3ProductSpark {
         // 技术点1：Hive数据源的使用
         JavaPairRDD<Long, Row> cityid2clickActionRDD = getClickActionRDDByDate(
                 sqlContext, startDate, endDate);
+        System.out.println("cityid2clickActionRDD: " + cityid2clickActionRDD.count());
 
         // 从MySQL中查询城市信息
         // 技术点2：异构数据源之MySQL的使用
         JavaPairRDD<Long, Row> cityid2cityInfoRDD = getcityid2CityInfoRDD(sqlContext);
+        System.out.println("cityid2cityInfoRDD: " + cityid2cityInfoRDD.count());
 
         // 生成点击商品基础信息临时表
         // 技术点3：将RDD转换为DataFrame，并注册临时表
@@ -98,6 +98,7 @@ public class AreaTop3ProductSpark {
 
         // 使用开窗函数获取各个区域内点击次数排名前3的热门商品
         JavaRDD<Row> areaTop3ProductRDD = getAreaTop3ProductRDD(sqlContext);
+        System.out.println("areaTop3ProductRDD: " + areaTop3ProductRDD.count());
 
         /*
         这边的写入mysql和之前不太一样
@@ -107,6 +108,7 @@ public class AreaTop3ProductSpark {
         用批量插入的方式，一次性插入mysql即可
          */
         List<Row> rows = areaTop3ProductRDD.collect();
+        System.out.println("rows: " + rows.size());
         persistAreaTop3Product(taskid, rows);
 
         sc.close();
@@ -167,17 +169,25 @@ public class AreaTop3ProductSpark {
     private static JavaPairRDD<Long, Row> getcityid2CityInfoRDD(SQLContext sqlContext) {
         // 构建MySQL连接配置信息（直接从配置文件中获取）
         String url = null;
+        String user = null;
+        String password = null;
         boolean local = ConfigurationManager.getBoolean(Constants.SPARK_LOCAL);
 
         if (local) {
             url = ConfigurationManager.getProperty(Constants.JDBC_URL);
+            user = ConfigurationManager.getProperty(Constants.JDBC_USER);
+            password = ConfigurationManager.getProperty(Constants.JDBC_PASSWORD);
         } else {
             url = ConfigurationManager.getProperty(Constants.JDBC_URL_PROD);
+            user = ConfigurationManager.getProperty(Constants.JDBC_USER_PROD);
+            password = ConfigurationManager.getProperty(Constants.JDBC_PASSWORD_PROD);
         }
 
         Map<String, String> options = new HashMap<>();
         options.put("url", url);
         options.put("dbtable", "city_info");
+        options.put("user", user);
+        options.put("password", password);
 
         // 通过SQLContext去从MySQL中查询数据
         Dataset<Row> cityInfoDF = sqlContext.read().format("jdbc")
@@ -284,8 +294,40 @@ public class AreaTop3ProductSpark {
                         + "FROM tmp_click_product_basic "
                         + "GROUP BY area,product_id ";
 
+        /**
+         * 双重group by
+         */
+        String _sql =
+                "SELECT "
+                        + "product_id_area,"
+                        + "count(click_count) click_count,"
+                        + "group_concat_distinct(city_infos) city_infos "
+                        + "FROM ( "
+                        + "SELECT "
+                        + "remove_random_prefix(product_id_area) product_id_area,"
+                        + "click_count,"
+                        + "city_infos "
+                        + "FROM ( "
+                        + "SELECT "
+                        + "product_id_area,"
+                        + "count(1) click_count,"
+                        + "group_concat_distinct(concat_long_string(city_id,city_name,':')) city_infos "
+                        + "FROM ( "
+                        + "SELECT "
+                        + "random_prefix(concat_long_string(product_id,area,':'), 10) product_id_area,"
+                        + "city_id,"
+                        + "city_name "
+                        + "FROM tmp_click_product_basic "
+                        + ") t1 "
+                        + "GROUP BY product_id_area "
+                        + ") t2 "
+                        + ") t3 "
+                        + "GROUP BY product_id_area ";
+
         // 使用Spark SQL执行这条SQL语句
         Dataset<Row> df = sqlContext.sql(sql);
+
+        System.out.println("tmp_area_product_click_count: " + df.count());
 
         /*
         再次将查询出来的数据注册为一个临时表
@@ -312,6 +354,8 @@ public class AreaTop3ProductSpark {
         你拿到到了某个区域top3热门的商品，那么其实这个商品是自营的，还是第三方的
         其实是很重要的一件事
          */
+
+        // 技术点：内置if函数的使用
         String sql =
                 "SELECT "
                         + "tapcc.area,"
@@ -319,11 +363,62 @@ public class AreaTop3ProductSpark {
                         + "tapcc.click_count,"
                         + "tapcc.city_infos,"
                         + "pi.product_name,"
-                        + "if(get_json_object(pi.extend_info,'product_status')=0,'自营商品','第三方商品') product_status "
+                        + "if(get_json_object(pi.extend_info,'product_status')=0,'自营商品','第三方商品') AS product_status "
                         + "FROM tmp_area_product_click_count tapcc "
                         + "JOIN product_info pi ON tapcc.product_id=pi.product_id ";
 
+        JavaRDD<Row> rdd = sqlContext.sql("select * from product_info").javaRDD();
+        // product_info 表扩容
+        JavaRDD<Row> flattedRDD = rdd.flatMap(new FlatMapFunction<Row, Row>() {
+
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public Iterator<Row> call(Row row) throws Exception {
+                List<Row> list = new ArrayList<>();
+
+                for (int i = 0; i < 10; i++) {
+                    long productid = row.getLong(0);
+                    String _productid = i + "_" + productid;
+
+                    Row _row = RowFactory.create(_productid, row.get(1), row.get(2));
+                    list.add(_row);
+                }
+
+                return list.iterator();
+            }
+
+        });
+
+        StructType _schema = DataTypes.createStructType(Arrays.asList(
+                DataTypes.createStructField("product_id", DataTypes.StringType, true),
+                DataTypes.createStructField("product_name", DataTypes.StringType, true),
+                DataTypes.createStructField("product_status", DataTypes.StringType, true)));
+
+        Dataset<Row> _df = sqlContext.createDataFrame(flattedRDD, _schema);
+        _df.createOrReplaceTempView("tmp_product_info");
+
+        String _sql =
+                "SELECT "
+                        + "tapcc.area,"
+                        + "remove_random_prefix(tapcc.product_id) product_id,"
+                        + "tapcc.click_count,"
+                        + "tapcc.city_infos,"
+                        + "pi.product_name,"
+                        + "if(get_json_object(pi.extend_info,'product_status')=0,'自营商品','第三方商品') product_status "
+                        + "FROM ("
+                        + "SELECT "
+                        + "area,"
+                        + "random_prefix(product_id, 10) product_id,"
+                        + "click_count,"
+                        + "city_infos "
+                        + "FROM tmp_area_product_click_count "
+                        + ") tapcc "
+                        + "JOIN tmp_product_info pi ON tapcc.product_id=pi.product_id ";
+
         Dataset<Row> df = sqlContext.sql(sql);
+
+        System.out.println("tmp_area_fullprod_click_count: " + df.count());
 
         df.createOrReplaceTempView("tmp_area_fullprod_click_count");
     }

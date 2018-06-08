@@ -57,7 +57,9 @@ public class MockData {
                     if ("search".equals(action)) {
                         searchKeyword = searchKeywords[random.nextInt(10)];
                     } else if ("click".equals(action)) {
-                        clickCategoryId = Long.valueOf(String.valueOf(random.nextInt(100)));
+                        if (clickCategoryId == null) {
+                            clickCategoryId = Long.valueOf(String.valueOf(random.nextInt(100)));
+                        }
                         clickProductId = Long.valueOf(String.valueOf(random.nextInt(100)));
                     } else if ("order".equals(action)) {
                         orderCategoryIds = String.valueOf(random.nextInt(100));
@@ -98,12 +100,12 @@ public class MockData {
         //    System.out.println(_row);
         //}
 
-        df.registerTempTable("user_visit_action");
+        df.createOrReplaceTempView("user_visit_action");
         df.show(10);
         Dataset<Row> a = sqlContext.sql("select count(1) from user_visit_action");
         a.show();
 
-        /*
+        /**
          * ==================================================================
          */
 
@@ -139,10 +141,41 @@ public class MockData {
         //    System.out.println(_row);
         //}
 
-        df2.registerTempTable("user_info");
+        df2.createOrReplaceTempView("user_info");
         df2.show(10);
         Dataset<Row> a2 = sqlContext.sql("select count(1) from user_info");
         a2.show();
+
+        /**
+         * ==================================================================
+         */
+
+        rows.clear();
+
+        int[] productStatus = new int[]{0, 1};
+
+        for (int i = 0; i < 100; i++) {
+            long productId = i;
+            String productName = "product" + i;
+            String extendInfo = "{\"product_status\": " + productStatus[random.nextInt(2)] + "}";
+
+            Row row = RowFactory.create(productId, productName, extendInfo);
+            rows.add(row);
+        }
+
+        rowsRDD = sc.parallelize(rows);
+
+        StructType schema3 = DataTypes.createStructType(Arrays.asList(
+                DataTypes.createStructField("product_id", DataTypes.LongType, true),
+                DataTypes.createStructField("product_name", DataTypes.StringType, true),
+                DataTypes.createStructField("extend_info", DataTypes.StringType, true)));
+
+        Dataset<Row> df3 = sqlContext.createDataFrame(rowsRDD, schema3);
+
+        df3.createOrReplaceTempView("product_info");
+        df3.show(10);
+        Dataset<Row> a3 = sqlContext.sql("select count(1) from product_info");
+        a3.show();
     }
 
 }
