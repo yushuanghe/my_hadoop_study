@@ -20,15 +20,23 @@ import java.util.Collections;
 public class GroupConcatDistinctUDAF extends UserDefinedAggregateFunction {
     private static final long serialVersionUID = -2950914040091707798L;
 
-    // 指定输入数据的字段与类型
+    /**
+     * 指定输入数据的字段与类型
+     */
     private StructType inputSchema = DataTypes.createStructType(Collections.singletonList(
             DataTypes.createStructField("cityInfo", DataTypes.StringType, true)));
-    // 指定缓冲数据的字段与类型
+    /**
+     * 指定缓冲数据的字段与类型
+     */
     private StructType bufferSchema = DataTypes.createStructType(Collections.singletonList(
             DataTypes.createStructField("bufferCityInfo", DataTypes.StringType, true)));
-    // 指定返回类型
+    /**
+     * 指定返回类型
+     */
     private DataType dataType = DataTypes.StringType;
-    // 指定是否是确定性的
+    /**
+     * 指定是否是确定性的
+     */
     private boolean deterministic = true;
 
     @Override

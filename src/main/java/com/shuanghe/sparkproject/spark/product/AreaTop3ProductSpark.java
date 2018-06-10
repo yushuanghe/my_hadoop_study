@@ -77,8 +77,7 @@ public class AreaTop3ProductSpark {
 
         // 查询用户指定日期范围内的点击行为数据（city_id，在哪个城市发生的点击行为）
         // 技术点1：Hive数据源的使用
-        JavaPairRDD<Long, Row> cityid2clickActionRDD = getClickActionRDDByDate(
-                sqlContext, startDate, endDate);
+        JavaPairRDD<Long, Row> cityid2clickActionRDD = getClickActionRDDByDate(sqlContext, startDate, endDate);
         System.out.println("cityid2clickActionRDD: " + cityid2clickActionRDD.count());
 
         // 从MySQL中查询城市信息
@@ -203,8 +202,8 @@ public class AreaTop3ProductSpark {
 
                     @Override
                     public Tuple2<Long, Row> call(Row row) throws Exception {
-                        long cityid = row.getAs("city_id");
-                        return new Tuple2<>(cityid, row);
+                        int cityid = row.getAs("city_id");
+                        return new Tuple2<>((long) cityid, row);
                     }
 
                 });
@@ -314,7 +313,7 @@ public class AreaTop3ProductSpark {
                         + "group_concat_distinct(concat_long_string(city_id,city_name,':')) city_infos "
                         + "FROM ( "
                         + "SELECT "
-                        + "random_prefix(concat_long_string(product_id,area,':'), 10) product_id_area,"
+                        + "random_prefix(concat_long_string(area,product_id,':'), 10) product_id_area,"
                         + "city_id,"
                         + "city_name "
                         + "FROM tmp_click_product_basic "

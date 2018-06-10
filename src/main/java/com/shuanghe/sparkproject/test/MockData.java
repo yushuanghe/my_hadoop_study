@@ -1,7 +1,9 @@
 package com.shuanghe.sparkproject.test;
 
 import com.shuanghe.util.DateUtils;
+import com.shuanghe.util.SparkUtils;
 import com.shuanghe.util.StringUtils;
+import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Dataset;
@@ -19,6 +21,19 @@ import java.util.*;
  * @author yushuanghe
  */
 public class MockData {
+
+    public static void main(String[] args) {
+        // 创建SparkConf
+        SparkConf conf = new SparkConf()
+                .setAppName("AreaTop3ProductSpark");
+        SparkUtils.setMaster(conf);
+
+        // 构建Spark上下文
+        JavaSparkContext sc = new JavaSparkContext(conf);
+        SQLContext sqlContext = SparkUtils.getSQLContext(sc.sc());
+
+        MockData.mock(sc, sqlContext);
+    }
 
     /**
      * 弄你数据
@@ -73,7 +88,8 @@ public class MockData {
                             pageid, actionTime, searchKeyword,
                             clickCategoryId, clickProductId,
                             orderCategoryIds, orderProductIds,
-                            payCategoryIds, payProductIds);
+                            payCategoryIds, payProductIds,
+                            Long.valueOf(String.valueOf(random.nextInt(10))));
                     rows.add(row);
                 }
             }
@@ -93,15 +109,13 @@ public class MockData {
                 DataTypes.createStructField("order_category_ids", DataTypes.StringType, true),
                 DataTypes.createStructField("order_product_ids", DataTypes.StringType, true),
                 DataTypes.createStructField("pay_category_ids", DataTypes.StringType, true),
-                DataTypes.createStructField("pay_product_ids", DataTypes.StringType, true)));
+                DataTypes.createStructField("pay_product_ids", DataTypes.StringType, true),
+                DataTypes.createStructField("city_id", DataTypes.LongType, true)));
 
         Dataset<Row> df = sqlContext.createDataFrame(rowsRDD, schema);
-        //for (Row _row : df.take(1)) {
-        //    System.out.println(_row);
-        //}
 
         df.createOrReplaceTempView("user_visit_action");
-        df.show(10);
+        df.show(10, false);
         Dataset<Row> a = sqlContext.sql("select count(1) from user_visit_action");
         a.show();
 
@@ -137,12 +151,9 @@ public class MockData {
                 DataTypes.createStructField("gender", DataTypes.StringType, true)));
 
         Dataset<Row> df2 = sqlContext.createDataFrame(rowsRDD, schema2);
-        //for (Row _row : df2.take(1)) {
-        //    System.out.println(_row);
-        //}
 
         df2.createOrReplaceTempView("user_info");
-        df2.show(10);
+        df2.show(10, false);
         Dataset<Row> a2 = sqlContext.sql("select count(1) from user_info");
         a2.show();
 
@@ -173,7 +184,7 @@ public class MockData {
         Dataset<Row> df3 = sqlContext.createDataFrame(rowsRDD, schema3);
 
         df3.createOrReplaceTempView("product_info");
-        df3.show(10);
+        df3.show(10, false);
         Dataset<Row> a3 = sqlContext.sql("select count(1) from product_info");
         a3.show();
     }
