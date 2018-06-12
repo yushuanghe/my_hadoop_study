@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Description:
+ * Description:广告实时统计DAO实现类
  * <p>
  * Date: 2018/06/08
  * Time: 17:50

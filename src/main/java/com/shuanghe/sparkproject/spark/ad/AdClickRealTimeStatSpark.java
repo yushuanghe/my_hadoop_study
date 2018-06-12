@@ -12,10 +12,7 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.Optional;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.Function2;
-import org.apache.spark.api.java.function.PairFunction;
-import org.apache.spark.api.java.function.VoidFunction;
+import org.apache.spark.api.java.function.*;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
@@ -45,7 +42,16 @@ public class AdClickRealTimeStatSpark {
         // 构建Spark Streaming上下文
         SparkConf conf = new SparkConf()
                 .setMaster("local[3]")
-                .setAppName("AdClickRealTimeStatSpark");
+                .setAppName("AdClickRealTimeStatSpark")
+                //使用kryo序列化
+                //.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+                //调节并行度
+                //.set("spark.default.parallelism", "1000")
+                //调节block interval
+                //.set("spark.streaming.blockInterval", "50")
+                //开启预写日志,实现RDD高可用性
+                //.set("spark.streaming.receiver.writeAheadLog.enable", "true")
+                ;
 
         /*
         spark streaming的上下文是构建JavaStreamingContext对象
@@ -66,6 +72,7 @@ public class AdClickRealTimeStatSpark {
         每隔5秒钟，咱们的spark streaming作业就会收集最近5秒内的数据源接收过来的数据
          */
         JavaStreamingContext jssc = new JavaStreamingContext(conf, Durations.seconds(5));
+        jssc.checkpoint("hdfs://shuanghe.com:8020/user/yushuanghe/spark_project/streaming_checkpoint");
 
         // 正式开始进行代码的编写
         // 实现咱们需要的实时计算的业务逻辑和功能
@@ -78,8 +85,7 @@ public class AdClickRealTimeStatSpark {
         主要要放置的就是，你要连接的kafka集群的地址（broker集群的地址列表）
          */
         Map<String, String> kafkaParams = new HashMap<>();
-        kafkaParams.put(Constants.KAFKA_METADATA_BROKER_LIST,
-                ConfigurationManager.getProperty(Constants.KAFKA_METADATA_BROKER_LIST));
+        kafkaParams.put("metadata.broker.list", ConfigurationManager.getProperty(Constants.KAFKA_METADATA_BROKER_LIST));
 
         // 构建topic set
         String kafkaTopics = ConfigurationManager.getProperty(Constants.KAFKA_TOPICS);
@@ -102,6 +108,9 @@ public class AdClickRealTimeStatSpark {
                 StringDecoder.class,
                 kafkaParams,
                 topics);
+
+        //重分区，增加每个batch rdd的partition数量
+        //adRealTimeLogDStream.repartition(1000);
 
         // 根据动态黑名单进行数据过滤
         JavaPairDStream<String, String> filteredAdRealTimeLogDStream = filterByBlacklist(adRealTimeLogDStream);
@@ -138,6 +147,65 @@ public class AdClickRealTimeStatSpark {
             e.printStackTrace();
         }
         jssc.close();
+    }
+
+    private static void testDriverHA() {
+        final String checkpointDir = "hdfs://shuanghe.com:8020/user/yushuanghe/spark_project/streaming_checkpoint";
+
+        Function0<JavaStreamingContext> contextFactory =
+                () -> createContext(checkpointDir);
+
+        JavaStreamingContext context = JavaStreamingContext.getOrCreate(
+                checkpointDir, contextFactory);
+
+        context.start();
+        try {
+            context.awaitTermination();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static JavaStreamingContext createContext(String checkpointDirectory) {
+        SparkConf conf = new SparkConf()
+                .setMaster("local[3]")
+                .setAppName("AdClickRealTimeStatSpark");
+
+        JavaStreamingContext jssc = new JavaStreamingContext(conf, Durations.seconds(5));
+        jssc.checkpoint(checkpointDirectory);
+
+        Map<String, String> kafkaParams = new HashMap<>();
+        kafkaParams.put("metadata.broker.list",
+                ConfigurationManager.getProperty(Constants.KAFKA_METADATA_BROKER_LIST));
+        String kafkaTopics = ConfigurationManager.getProperty(Constants.KAFKA_TOPICS);
+        String[] kafkaTopicsSplited = kafkaTopics.split(",");
+        Set<String> topics = new HashSet<>();
+        for (String kafkaTopic : kafkaTopicsSplited) {
+            topics.add(kafkaTopic);
+        }
+
+        JavaPairInputDStream<String, String> adRealTimeLogDStream = KafkaUtils.createDirectStream(
+                jssc,
+                String.class,
+                String.class,
+                StringDecoder.class,
+                StringDecoder.class,
+                kafkaParams,
+                topics);
+
+        JavaPairDStream<String, String> filteredAdRealTimeLogDStream =
+                filterByBlacklist(adRealTimeLogDStream);
+
+        generateDynamicBlacklist(filteredAdRealTimeLogDStream);
+
+        JavaPairDStream<String, Long> adRealTimeStatDStream = calculateRealTimeStat(
+                filteredAdRealTimeLogDStream);
+
+        calculateProvinceTop3Ad(adRealTimeStatDStream);
+
+        calculateAdClickCountByWindow(adRealTimeLogDStream);
+
+        return jssc;
     }
 
     /**
@@ -198,7 +266,6 @@ public class AdClickRealTimeStatSpark {
                         如果说原始日志的userid，没有在对应的黑名单中，join不到，左外连接
                         用inner join，内连接，会导致数据丢失
                          */
-
                         JavaPairRDD<Long, Tuple2<Tuple2<String, String>, Optional<Boolean>>> joinedRDD =
                                 mappedRDD.leftOuterJoin(blacklistRDD);
 
@@ -304,7 +371,10 @@ public class AdClickRealTimeStatSpark {
                         return v1 + v2;
                     }
 
-                });
+                }
+                //reduceByKey算子并行度
+                //, 1000
+        );
 
         /*
         到这里为止，获取到了什么数据呢？

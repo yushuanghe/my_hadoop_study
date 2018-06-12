@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Description:
+ * Description:各省份top3热门广告DAO实现类
  * <p>
  * Date: 2018/06/08
  * Time: 18:21
