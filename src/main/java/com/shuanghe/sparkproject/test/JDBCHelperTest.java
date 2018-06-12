@@ -2,7 +2,6 @@ package com.shuanghe.sparkproject.test;
 
 import com.shuanghe.sparkproject.jdbc.JDBCHelper;
 
-import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,24 +34,19 @@ public class JDBCHelperTest {
         jdbcHelper.executeQuery(
                 "select name,age from test_user where id>?",
                 new Object[]{1},
-                new JDBCHelper.QueryCallback() {
+                rs -> {
+                    while (rs.next()) {
+                        String name = rs.getString(1);
+                        int age = rs.getInt(2);
 
-                    @Override
-                    public void process(ResultSet rs) throws Exception {
-                        while (rs.next()) {
-                            String name = rs.getString(1);
-                            int age = rs.getInt(2);
-
-                            // 匿名内部类的使用，有一个很重要的知识点
-                            // 如果要访问外部类中的一些成员，比如方法内的局部变量
-                            // 那么，必须将局部变量，声明为final类型，才可以访问
-                            // 否则是访问不了的
-                            testUser.put("name", name);
-                            testUser.put("age", age);
-                            System.out.println(name + ":" + age);
-                        }
+                        // 匿名内部类的使用，有一个很重要的知识点
+                        // 如果要访问外部类中的一些成员，比如方法内的局部变量
+                        // 那么，必须将局部变量，声明为final类型，才可以访问
+                        // 否则是访问不了的
+                        testUser.put("name", name);
+                        testUser.put("age", age);
+                        System.out.println(name + ":" + age);
                     }
-
                 });
 
         // 测试批量执行SQL语句
