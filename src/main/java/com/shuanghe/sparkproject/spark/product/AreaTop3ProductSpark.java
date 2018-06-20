@@ -134,8 +134,8 @@ public class AreaTop3ProductSpark {
                         + "click_product_id AS product_id "
                         + "FROM user_visit_action "
                         + "WHERE click_product_id IS NOT NULL "
-                        + "AND click_product_id != 'NULL' "
-                        + "AND click_product_id != 'null' "
+                        //+ "AND click_product_id != 'NULL' "
+                        //+ "AND click_product_id != 'null' "
                         + "AND action_time>='" + startDate + "' "
                         + "AND action_time<='" + endDate + "'";
 
