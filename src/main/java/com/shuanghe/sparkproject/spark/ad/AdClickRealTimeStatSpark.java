@@ -139,6 +139,8 @@ public class AdClickRealTimeStatSpark {
          */
         calculateAdClickCountByWindow(adRealTimeLogDStream);
 
+        //filteredAdRealTimeLogDStream.print();
+
         // 构建完spark streaming上下文之后，记得要进行上下文的启动、等待执行结束、关闭
         jssc.start();
         try {

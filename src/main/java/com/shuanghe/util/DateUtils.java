@@ -4,6 +4,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 日期时间工具类
@@ -12,12 +14,69 @@ import java.util.Date;
  */
 public class DateUtils {
 
-    public static final SimpleDateFormat TIME_FORMAT =
-            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    public static final SimpleDateFormat DATE_FORMAT =
-            new SimpleDateFormat("yyyy-MM-dd");
-    public static final SimpleDateFormat DATEKEY_FORMAT =
-            new SimpleDateFormat("yyyyMMdd");
+    public static final String TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+    public static final String DATE_FORMAT = "yyyy-MM-dd";
+    public static final String DATEKEY_FORMAT = "yyyyMMdd";
+    public static final String MINUTE_FORMAT = "yyyyMMddHHmm";
+
+    /**
+     * 锁对象
+     */
+    private static final Object lockObj = new Object();
+
+    /**
+     * 存放不同的日期模板格式的sdf的Map
+     */
+    private static Map<String, ThreadLocal<SimpleDateFormat>> sdfMap = new HashMap<>();
+
+    /**
+     * 返回一个ThreadLocal的sdf,每个线程只会new一次sdf
+     *
+     * @param pattern
+     * @return
+     */
+    private static SimpleDateFormat getSdf(final String pattern) {
+        ThreadLocal<SimpleDateFormat> tl = sdfMap.get(pattern);
+
+        // 此处的双重判断和同步是为了防止sdfMap这个单例被多次put重复的sdf
+        if (tl == null) {
+            synchronized (lockObj) {
+                tl = sdfMap.get(pattern);
+                if (tl == null) {
+                    // 只有Map中还没有这个pattern的sdf才会生成新的sdf并放入map
+                    System.out.println("put new sdf of pattern " + pattern + " to map");
+
+                    // 这里是关键,使用ThreadLocal<SimpleDateFormat>替代原来直接new SimpleDateFormat
+                    tl = new ThreadLocal<SimpleDateFormat>() {
+
+                        @Override
+                        protected SimpleDateFormat initialValue() {
+                            System.out.println("thread: " + Thread.currentThread() + " init pattern: " + pattern);
+                            return new SimpleDateFormat(pattern);
+                        }
+                    };
+                    sdfMap.put(pattern, tl);
+                }
+            }
+        }
+
+        return tl.get();
+    }
+
+    /**
+     * 是用ThreadLocal<SimpleDateFormat>来获取SimpleDateFormat,这样每个线程只会有一个SimpleDateFormat
+     *
+     * @param date
+     * @param pattern
+     * @return
+     */
+    public static String format(Date date, String pattern) {
+        return getSdf(pattern).format(date);
+    }
+
+    public static Date parse(String dateStr, String pattern) throws ParseException {
+        return getSdf(pattern).parse(dateStr);
+    }
 
     /**
      * 判断一个时间是否在另一个时间之前
@@ -28,8 +87,8 @@ public class DateUtils {
      */
     public static boolean before(String time1, String time2) {
         try {
-            Date dateTime1 = TIME_FORMAT.parse(time1);
-            Date dateTime2 = TIME_FORMAT.parse(time2);
+            Date dateTime1 = getSdf(TIME_FORMAT).parse(time1);
+            Date dateTime2 = getSdf(TIME_FORMAT).parse(time2);
 
             if (dateTime1.before(dateTime2)) {
                 return true;
@@ -49,8 +108,8 @@ public class DateUtils {
      */
     public static boolean after(String time1, String time2) {
         try {
-            Date dateTime1 = TIME_FORMAT.parse(time1);
-            Date dateTime2 = TIME_FORMAT.parse(time2);
+            Date dateTime1 = getSdf(TIME_FORMAT).parse(time1);
+            Date dateTime2 = getSdf(TIME_FORMAT).parse(time2);
 
             if (dateTime1.after(dateTime2)) {
                 return true;
@@ -70,8 +129,8 @@ public class DateUtils {
      */
     public static int minus(String time1, String time2) {
         try {
-            Date datetime1 = TIME_FORMAT.parse(time1);
-            Date datetime2 = TIME_FORMAT.parse(time2);
+            Date datetime1 = getSdf(TIME_FORMAT).parse(time1);
+            Date datetime2 = getSdf(TIME_FORMAT).parse(time2);
 
             long millisecond = datetime1.getTime() - datetime2.getTime();
 
@@ -101,7 +160,7 @@ public class DateUtils {
      * @return 当天日期
      */
     public static String getTodayDate() {
-        return DATE_FORMAT.format(new Date());
+        return getSdf(DATE_FORMAT).format(new Date());
     }
 
     /**
@@ -116,7 +175,7 @@ public class DateUtils {
 
         Date date = cal.getTime();
 
-        return DATE_FORMAT.format(date);
+        return getSdf(DATE_FORMAT).format(date);
     }
 
     /**
@@ -126,7 +185,7 @@ public class DateUtils {
      * @return 格式化后的日期
      */
     public static String formatDate(Date date) {
-        return DATE_FORMAT.format(date);
+        return getSdf(DATE_FORMAT).format(date);
     }
 
     /**
@@ -136,7 +195,7 @@ public class DateUtils {
      * @return 格式化后的时间
      */
     public static String formatTime(Date date) {
-        return TIME_FORMAT.format(date);
+        return getSdf(TIME_FORMAT).format(date);
     }
 
     /**
@@ -147,7 +206,7 @@ public class DateUtils {
      */
     public static Date parseTime(String date) {
         try {
-            return TIME_FORMAT.parse(date);
+            return getSdf(TIME_FORMAT).parse(date);
         } catch (ParseException e) {
             e.printStackTrace();
         }
@@ -161,7 +220,7 @@ public class DateUtils {
      * @return
      */
     public static String formatDateKey(Date date) {
-        return DATEKEY_FORMAT.format(date);
+        return getSdf(DATEKEY_FORMAT).format(date);
     }
 
     /**
@@ -172,7 +231,7 @@ public class DateUtils {
      */
     public static Date parseDateKey(String datekey) {
         try {
-            return DATEKEY_FORMAT.parse(datekey);
+            return getSdf(DATEKEY_FORMAT).parse(datekey);
         } catch (ParseException e) {
             e.printStackTrace();
         }
@@ -187,7 +246,6 @@ public class DateUtils {
      * @return
      */
     public static String formatTimeMinute(Date date) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmm");
-        return sdf.format(date);
+        return getSdf(MINUTE_FORMAT).format(date);
     }
 }

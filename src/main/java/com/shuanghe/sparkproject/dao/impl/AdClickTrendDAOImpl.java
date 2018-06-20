@@ -2,7 +2,7 @@ package com.shuanghe.sparkproject.dao.impl;
 
 import com.shuanghe.sparkproject.dao.IAdClickTrendDAO;
 import com.shuanghe.sparkproject.domain.AdClickTrend;
-import com.shuanghe.sparkproject.jdbc.JDBCHelper;
+import com.shuanghe.sparkproject.jdbc.JdbcManager;
 import com.shuanghe.sparkproject.model.AdClickTrendQueryResult;
 
 import java.util.ArrayList;
@@ -19,7 +19,7 @@ import java.util.List;
 public class AdClickTrendDAOImpl implements IAdClickTrendDAO {
     @Override
     public void updateBatch(List<AdClickTrend> adClickTrends) {
-        JDBCHelper jdbcHelper = JDBCHelper.getInstance();
+        //JDBCHelper jdbcHelper = JDBCHelper.getInstance();
 
         /*
         区分出来哪些数据是要插入的，哪些数据是要更新的
@@ -53,7 +53,13 @@ public class AdClickTrendDAOImpl implements IAdClickTrendDAO {
                     adClickTrend.getMinute(),
                     adClickTrend.getAdid()};
 
-            jdbcHelper.executeQuery(selectSQL, params, rs -> {
+            //jdbcHelper.executeQuery(selectSQL, params, rs -> {
+            //    if (rs.next()) {
+            //        int count = rs.getInt(1);
+            //        queryResult.setCount(count);
+            //    }
+            //});
+            JdbcManager.executeQuery(selectSQL, params, rs -> {
                 if (rs.next()) {
                     int count = rs.getInt(1);
                     queryResult.setCount(count);
@@ -87,7 +93,8 @@ public class AdClickTrendDAOImpl implements IAdClickTrendDAO {
             updateParamsList.add(params);
         }
 
-        jdbcHelper.executeBatch(updateSQL, updateParamsList);
+        //jdbcHelper.executeBatch(updateSQL, updateParamsList);
+        JdbcManager.executeBatch(updateSQL, updateParamsList);
 
         // 执行批量更新操作
         String insertSQL = "INSERT INTO ad_click_trend VALUES(?,?,?,?,?)";
@@ -103,6 +110,7 @@ public class AdClickTrendDAOImpl implements IAdClickTrendDAO {
             insertParamsList.add(params);
         }
 
-        jdbcHelper.executeBatch(insertSQL, insertParamsList);
+        //jdbcHelper.executeBatch(insertSQL, insertParamsList);
+        JdbcManager.executeBatch(insertSQL, insertParamsList);
     }
 }

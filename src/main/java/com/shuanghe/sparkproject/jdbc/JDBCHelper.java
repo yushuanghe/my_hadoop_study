@@ -57,7 +57,7 @@ public class JDBCHelper {
      * 为了保证数据库连接池有且仅有一份，所以就通过单例的方式
      * 保证JDBCHelper只有一个实例，实例中只有一份数据库连接池
      */
-    private static volatile JDBCHelper instance = null;
+    private static JDBCHelper instance = null;
 
     /**
      * 获取单例
@@ -118,7 +118,7 @@ public class JDBCHelper {
     public synchronized Connection getConnection() {
         while (datasource.size() == 0) {
             try {
-                Thread.sleep(10);
+                Thread.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

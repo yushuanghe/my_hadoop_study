@@ -2,7 +2,7 @@ package com.shuanghe.sparkproject.dao.impl;
 
 import com.shuanghe.sparkproject.dao.IAdStatDAO;
 import com.shuanghe.sparkproject.domain.AdStat;
-import com.shuanghe.sparkproject.jdbc.JDBCHelper;
+import com.shuanghe.sparkproject.jdbc.JdbcManager;
 import com.shuanghe.sparkproject.model.AdStatQueryResult;
 
 import java.util.ArrayList;
@@ -19,7 +19,7 @@ import java.util.List;
 public class AdStatDAOImpl implements IAdStatDAO {
     @Override
     public void updateBatch(List<AdStat> adStats) {
-        JDBCHelper jdbcHelper = JDBCHelper.getInstance();
+        //JDBCHelper jdbcHelper = JDBCHelper.getInstance();
 
         // 区分开来哪些是要插入的，哪些是要更新的
         List<AdStat> insertAdStats = new ArrayList<>();
@@ -41,7 +41,13 @@ public class AdStatDAOImpl implements IAdStatDAO {
                     adStat.getCity(),
                     adStat.getAdid()};
 
-            jdbcHelper.executeQuery(selectSQL, params, rs -> {
+            //jdbcHelper.executeQuery(selectSQL, params, rs -> {
+            //    if (rs.next()) {
+            //        int count = rs.getInt(1);
+            //        queryResult.setCount(count);
+            //    }
+            //});
+            JdbcManager.executeQuery(selectSQL, params, rs -> {
                 if (rs.next()) {
                     int count = rs.getInt(1);
                     queryResult.setCount(count);
@@ -71,11 +77,11 @@ public class AdStatDAOImpl implements IAdStatDAO {
             insertParamsList.add(params);
         }
 
-        jdbcHelper.executeBatch(insertSQL, insertParamsList);
+        //jdbcHelper.executeBatch(insertSQL, insertParamsList);
+        JdbcManager.executeBatch(insertSQL, insertParamsList);
 
         // 对于需要更新的数据，执行批量更新操作
         String updateSQL = "UPDATE ad_stat SET click_count=? "
-                + "FROM ad_stat "
                 + "WHERE date=? "
                 + "AND province=? "
                 + "AND city=? "
@@ -92,6 +98,7 @@ public class AdStatDAOImpl implements IAdStatDAO {
             updateParamsList.add(params);
         }
 
-        jdbcHelper.executeBatch(updateSQL, updateParamsList);
+        //jdbcHelper.executeBatch(updateSQL, updateParamsList);
+        JdbcManager.executeBatch(updateSQL, updateParamsList);
     }
 }

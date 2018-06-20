@@ -2,7 +2,7 @@ package com.shuanghe.sparkproject.dao.impl;
 
 import com.shuanghe.sparkproject.dao.IAdProvinceTop3DAO;
 import com.shuanghe.sparkproject.domain.AdProvinceTop3;
-import com.shuanghe.sparkproject.jdbc.JDBCHelper;
+import com.shuanghe.sparkproject.jdbc.JdbcManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +18,7 @@ import java.util.List;
 public class AdProvinceTop3DAOImpl implements IAdProvinceTop3DAO {
     @Override
     public void updateBatch(List<AdProvinceTop3> adProvinceTop3s) {
-        JDBCHelper jdbcHelper = JDBCHelper.getInstance();
+        //JDBCHelper jdbcHelper = JDBCHelper.getInstance();
 
         // 先做一次去重（date_province）
         List<String> dateProvinces = new ArrayList<>();
@@ -47,7 +47,8 @@ public class AdProvinceTop3DAOImpl implements IAdProvinceTop3DAO {
             deleteParamsList.add(params);
         }
 
-        jdbcHelper.executeBatch(deleteSQL, deleteParamsList);
+        //jdbcHelper.executeBatch(deleteSQL, deleteParamsList);
+        JdbcManager.executeBatch(deleteSQL, deleteParamsList);
 
         // 批量插入传入进来的所有数据
         String insertSQL = "INSERT INTO ad_province_top3 VALUES(?,?,?,?)";
@@ -63,6 +64,7 @@ public class AdProvinceTop3DAOImpl implements IAdProvinceTop3DAO {
             insertParamsList.add(params);
         }
 
-        jdbcHelper.executeBatch(insertSQL, insertParamsList);
+        //jdbcHelper.executeBatch(insertSQL, insertParamsList);
+        JdbcManager.executeBatch(insertSQL, insertParamsList);
     }
 }

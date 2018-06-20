@@ -2,7 +2,7 @@ package com.shuanghe.sparkproject.dao.impl;
 
 import com.shuanghe.sparkproject.dao.IAdUserClickCountDAO;
 import com.shuanghe.sparkproject.domain.AdUserClickCount;
-import com.shuanghe.sparkproject.jdbc.JDBCHelper;
+import com.shuanghe.sparkproject.jdbc.JdbcManager;
 import com.shuanghe.sparkproject.model.AdUserClickCountQueryResult;
 
 import java.util.ArrayList;
@@ -19,7 +19,7 @@ import java.util.List;
 public class AdUserClickCountDAOImpl implements IAdUserClickCountDAO {
     @Override
     public void updateBatch(List<AdUserClickCount> adUserClickCounts) {
-        JDBCHelper jdbcHelper = JDBCHelper.getInstance();
+        //JDBCHelper jdbcHelper = JDBCHelper.getInstance();
 
         // 首先对用户广告点击量进行分类，分成待插入的和待更新的
         List<AdUserClickCount> insertAdUserClickCounts = new ArrayList<>();
@@ -35,7 +35,13 @@ public class AdUserClickCountDAOImpl implements IAdUserClickCountDAO {
             selectParams = new Object[]{adUserClickCount.getDate(),
                     adUserClickCount.getUserid(), adUserClickCount.getAdid()};
 
-            jdbcHelper.executeQuery(selectSQL, selectParams, rs -> {
+            //jdbcHelper.executeQuery(selectSQL, selectParams, rs -> {
+            //    if (rs.next()) {
+            //        int count = rs.getInt(1);
+            //        queryResult.setCount(count);
+            //    }
+            //});
+            JdbcManager.executeQuery(selectSQL, selectParams, rs -> {
                 if (rs.next()) {
                     int count = rs.getInt(1);
                     queryResult.setCount(count);
@@ -63,7 +69,8 @@ public class AdUserClickCountDAOImpl implements IAdUserClickCountDAO {
             insertParamsList.add(insertParams);
         }
 
-        jdbcHelper.executeBatch(insertSQL, insertParamsList);
+        //jdbcHelper.executeBatch(insertSQL, insertParamsList);
+        JdbcManager.executeBatch(insertSQL, insertParamsList);
 
         // 执行批量更新
         String updateSQL = "UPDATE ad_user_click_count SET click_count=? "
@@ -78,7 +85,8 @@ public class AdUserClickCountDAOImpl implements IAdUserClickCountDAO {
             updateParamsList.add(updateParams);
         }
 
-        jdbcHelper.executeBatch(updateSQL, updateParamsList);
+        //jdbcHelper.executeBatch(updateSQL, updateParamsList);
+        JdbcManager.executeBatch(updateSQL, updateParamsList);
     }
 
     @Override
@@ -90,12 +98,18 @@ public class AdUserClickCountDAOImpl implements IAdUserClickCountDAO {
                         + "AND user_id=? "
                         + "AND ad_id=?";
 
-        Object[] params = new Object[]{date, userid, adid};
+        Object[] params = new Object[]{date, (int) userid, (int) adid};
 
         final AdUserClickCountQueryResult queryResult = new AdUserClickCountQueryResult();
 
-        JDBCHelper jdbcHelper = JDBCHelper.getInstance();
-        jdbcHelper.executeQuery(sql, params, rs -> {
+        //JDBCHelper jdbcHelper = JDBCHelper.getInstance();
+        //jdbcHelper.executeQuery(sql, params, rs -> {
+        //    if (rs.next()) {
+        //        int clickCount = rs.getInt(1);
+        //        queryResult.setClickCount(clickCount);
+        //    }
+        //});
+        JdbcManager.executeQuery(sql, params, rs -> {
             if (rs.next()) {
                 int clickCount = rs.getInt(1);
                 queryResult.setClickCount(clickCount);

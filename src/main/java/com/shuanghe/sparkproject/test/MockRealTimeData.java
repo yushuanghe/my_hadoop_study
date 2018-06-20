@@ -38,18 +38,19 @@ public class MockRealTimeData implements Runnable {
         return new ProducerConfig(props);
     }
 
+    @Override
     public void run() {
         while (true) {
             String province = provinces[random.nextInt(5)];
             String city = provinceCityMap.get(province)[random.nextInt(2)];
 
-            String log = new Date().getTime() + " " + province + " " + city + " "
+            String log = System.currentTimeMillis() + " " + province + " " + city + " "
                     + random.nextInt(1000) + " " + random.nextInt(10);
 
             producer.send(new KeyedMessage<>("AdRealTimeLog", log));
 
             try {
-                Thread.sleep(100);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
