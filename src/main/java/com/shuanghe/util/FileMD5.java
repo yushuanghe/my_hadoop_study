@@ -21,7 +21,10 @@ import java.util.Map;
 public class FileMD5 {
     public static void main(String[] args) {
         String path = "C:\\Users\\happyelements\\Downloads\\hadoop-3.1.0.tar.gz";
-        System.out.println(FileMD5.getFileMD5(new File(path)));
+        long time1 = System.currentTimeMillis();
+        String result = FileMD5.getFileMD5(new File(path));
+        long time2 = System.currentTimeMillis();
+        System.out.println(String.format("md5值为：%s，耗时为：%s", result, (time2 - time1)));
     }
 
     /**

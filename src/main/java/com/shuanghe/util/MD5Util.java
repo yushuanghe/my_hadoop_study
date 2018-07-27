@@ -25,10 +25,13 @@ public class MD5Util {
     public static void main(String[] args) {
         //此处我测试的是我本机jdk源码文件的MD5值
         String filePath = "C:\\Users\\happyelements\\Downloads\\hadoop-3.1.0.tar.gz";
+        long time1 = System.currentTimeMillis();
         String md5Hashcode2 = MD5Util.getFileMD5(new File(filePath));
+        long time2 = System.currentTimeMillis();
 
         System.out.println("MD5Util计算文件md5值为：" + md5Hashcode2);
         System.out.println("MD5Util计算文件md5值的长度为：" + md5Hashcode2.length());
+        System.out.println("用时：" + (time2 - time1));
     }
 
     /**
