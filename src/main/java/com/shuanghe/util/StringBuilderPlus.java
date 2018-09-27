@@ -1,6 +1,6 @@
 package com.shuanghe.util;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * Description:
@@ -23,7 +23,7 @@ public class StringBuilderPlus {
     }
 
     public StringBuilderPlus append(String add) {
-        if (StringUtils.isNotEmpty(add)) {
+        if (StringUtils.isNotBlank(add)) {
             builder.append(add);
         }
         return this;
