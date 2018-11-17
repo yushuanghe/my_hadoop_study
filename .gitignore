@@ -49,3 +49,5 @@ temp/
 out/
 
 target/
+dependency-reduced-pom.xml
+my_hadoop_study.iml
