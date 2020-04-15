@@ -13,9 +13,9 @@ import org.apache.spark.streaming.kafka.KafkaUtils
 object Top3HotProduct {
     def main(args: Array[String]): Unit = {
         val spark: SparkSession = SparkSession.builder()
-                .appName("Top3HotProduct")
-                .master("local[2]")
-                .getOrCreate()
+            .appName("Top3HotProduct")
+            .master("local[2]")
+            .getOrCreate()
 
         val sc: SparkContext = spark.sparkContext
         val ssc: StreamingContext = new StreamingContext(sc, Seconds(5))
@@ -64,14 +64,14 @@ object Top3HotProduct {
 
                 val top3ProductDF: DataFrame = spark.sql {
                     "select " +
-                            "category,product,click_count " +
-                            "from (" +
-                            "select " +
-                            "category,product,click_count," +
-                            "row_number() over (partition by category order by click_count desc) as rank " +
-                            "from product_click_log " +
-                            ") t " +
-                            "where rank <= 3"
+                        "category,product,click_count " +
+                        "from (" +
+                        "select " +
+                        "category,product,click_count," +
+                        "row_number() over (partition by category order by click_count desc) as rank " +
+                        "from product_click_log " +
+                        ") t " +
+                        "where rank <= 3"
                 }
 
                 top3ProductDF.show()

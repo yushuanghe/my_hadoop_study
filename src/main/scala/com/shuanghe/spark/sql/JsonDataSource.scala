@@ -6,7 +6,7 @@ import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 
 object JsonDataSource {
     def main(args: Array[String]): Unit = {
-        val spark = SparkSession.builder()
+        val spark: SparkSession = SparkSession.builder()
                 .appName("JsonDataSource")
                 .master("local")
                 .getOrCreate()
